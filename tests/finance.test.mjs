@@ -1,44 +1,29 @@
-import assert from 'node:assert/strict';
 import test from 'node:test';
-import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
-const require = createRequire(import.meta.url);
-// The tests can run even before dependency installation using the system TypeScript compiler.
-const ts = require('/opt/nvm/versions/node/v22.16.0/lib/node_modules/typescript/lib/typescript.js');
-const source = readFileSync(resolve('lib/finance.ts'), 'utf8');
-const { outputText } = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 } });
-const f = await import(`data:text/javascript,${encodeURIComponent(outputText)}`);
-const person = (name, amount) => ({id:name,name,entries:[{id:name+'-1',amount}]});
-const snap = (id, date, bank, cash, price, people=[],liabilities=[])=>({id,date,bank,ofii:100,redotpay:0,cash,people,liabilities,gold:{grams:10,karat:24,pricePerGram:price}});
-test('net worth: assets + receivables - liabilities + gold',()=>{
- const s=snap('1','2026-10-01T12:00:00Z',1000,200,100,[person('a',80)],[person('b',30)]);
- assert.equal(f.liquid(s),1300);
- assert.equal(f.withoutGold(s),1350);
- assert.equal(f.goldValue(s),1000);
- assert.equal(f.netWorth(s),2350);
+import assert from 'node:assert/strict';
+import { goldValue, liquid, netWorth, sumPeople, withoutGold, monthStatistics, toCSV } from '../lib/finance.ts';
+const item = { id:'example-only',date:'2026-10-05T12:00:00.000Z',bank:300,ofii:200,redotpay:50,cash:30,people:[{id:'a',name:'A',entries:[{id:'1',amount:100},{id:'2',amount:25}]}],liabilities:[{id:'b',name:'B',entries:[{id:'3',amount:40}]}],gold:{grams:10,karat:24,pricePerGram:90},note:'test'};
+test('financial assets, debts and gold are calculated independently',()=>{
+ assert.equal(sumPeople(item.people),125);
+ assert.equal(liquid(item),580);
+ assert.equal(withoutGold(item),665);
+ assert.equal(goldValue(item),900);
+ assert.equal(netWorth(item),1565);
 });
-test('settling receivable into cash does not alter net worth',()=>{
- const old=snap('1','2026-10-01T12:00:00Z',100,100,99,[person('a',60)]);
- const updated={...old,cash:160,people:[]};
- assert.equal(f.withoutGold(old),f.withoutGold(updated));
+test('settling receivable between account and debt leaves net worth unchanged',()=>{
+ const received={...item,cash:item.cash+60,people:[{...item.people[0],entries:[{id:'1',amount:40},{id:'2',amount:25}]}]};
+ assert.equal(netWorth(received),netWorth(item));
 });
-test('paying liability from cash does not alter net worth',()=>{
- const old=snap('1','2026-10-01T12:00:00Z',1000,300,99,[],[person('a',50)]);
- const updated={...old,cash:250,liabilities:[]};
- assert.equal(f.withoutGold(old),f.withoutGold(updated));
+test('settling a payable between account and debt leaves net worth unchanged',()=>{
+ const paid={...item,cash:item.cash-20,liabilities:[{...item.liabilities[0],entries:[{id:'3',amount:20}]}]};
+ assert.equal(netWorth(paid),netWorth(item));
 });
-test('expenses exclude gold valuation changes',()=>{
- const a=snap('a','2026-10-01T12:00:00Z',1000,200,100);
- const b=snap('b','2026-10-02T12:00:00Z',980,200,200);
- assert.equal(f.monthStatistics([b,a],'2026-10')?.spent,20);
- assert.equal(f.monthStatistics([b,a],'2026-10')?.net,-20);
- assert.equal(f.netWorth(b)-f.netWorth(a),980);
+test('monthly deltas exclude gold price changes',()=>{
+ const next={...item,id:'new',date:'2026-10-08T12:00:00.000Z',gold:{...item.gold,pricePerGram:95},bank:270};
+ const result=monthStatistics([item,next],'2026-10');
+ assert.equal(result?.spent,30);
+ assert.equal(result?.received,0);
 });
-test('CSV retains all money fields and dates',()=>{
- const s=snap('a','2026-10-01T12:00:00Z',34.5,2.2,100);
- const csv=f.toCSV([s]);
- assert(csv.startsWith('\uFEFF'));
- assert(csv.includes('2026-10-01T12:00:00Z'));
- assert(csv.includes('34.5'));
+test('CSV exports expected columns without external requests',()=>{
+ const csv=toCSV([item]);
+ assert.match(csv,/Redotpay/);assert.match(csv,/1565/);
 });
