@@ -38,5 +38,11 @@ The original database has table schemas:
 ## No data corruption by default
 This project includes no demo seed and no schema migrations. A failed cloud request never overwrites real data with localStorage. Snapshots preserve original IDs on edit and are inserted without choosing old IDs for new rows. Deletion always requires confirmation. `CSV` export is generated in the browser from values already loaded into memory.
 
-## Repository creation
-Create a new **private** empty GitHub repository, e.g. `mali-wealth-ledger-next`, then push this source tree. No old repository files need to be copied.
+
+## Repository and deployment status
+
+- GitHub: https://github.com/Ahmedsamra96/monycalapp
+- CI: `npm test`, `npm run typecheck`, and `npm run build` run automatically with GitHub Actions.
+- The current repository is **public**. No personal financial records or database secret keys are committed.
+- Live data requires deploying to Vercel with **both** `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` configured in server-only environment settings. Without both, the application intentionally displays a connection error.
+- The existing Lovable-managed database remains unchanged. Do not run seeds or migrations.
