@@ -4,8 +4,8 @@ import type { AppData, Price, Settings, Snapshot } from './finance';
 
 export function db() {
   const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY on the server');
+  const key = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!url || !key) throw new Error('Missing SUPABASE_URL or SUPABASE_SECRET_KEY on the server');
   return createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } });
 }
 export function fromSnapshotRow(r: Record<string, unknown>): Snapshot {
