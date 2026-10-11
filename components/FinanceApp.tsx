@@ -50,6 +50,7 @@ export default function FinanceApp() {
   const snaps=useMemo(()=>sorted(data?.snapshots||[]),[data]);
   const latest=snaps.at(-1);
   const previous=snaps.at(-2);
+  const thisMonth=monthStatistics(snaps,currentMonth());
   const availableMonths=useMemo(()=>[...new Set([currentMonth(),...snaps.map(s=>monthKey(s.date))])].sort().reverse(),[snaps]);
   const activeMonth=monthStatistics(snaps,month);
 
@@ -60,7 +61,7 @@ export default function FinanceApp() {
     }catch(e){setError(e instanceof Error?e.message:'تعذّر حفظ القراءة');throw e;}finally{setBusy(false);}
   }
   async function removeSnapshot(item:Snapshot){
-    if(!window.confirm(`هل أنت متأكد من حذف قراءة ${dateLabel(item.date)}؟ سيتم حذفها أيضًا من قاعدة البيانات الأصلية ولن يمكن التراجع.`))return;
+    if(!window.confirm(`هل أنت متأكد من حذف قراءة ${dateLabel(item.date)}؟ سيتم حذفها من قاعدة بيانات MonyCal الجديدة ولن يمكن التراجع.`))return;
     setBusy(true);try{await request(`/api/snapshots/${item.id}`,'DELETE');await refresh();setNotice('تم حذف القراءة');}catch(e){setError(e instanceof Error?e.message:'تعذّر الحذف');}finally{setBusy(false);}
   }
   function openDebt(action:DebtAction){setDebtAction(action);setDebtName('');setDebtAmount(action.type==='settle'&&action.person?String(sumPeople([action.person])):'');setDebtAccount('cash');}
