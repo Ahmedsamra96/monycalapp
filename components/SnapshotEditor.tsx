@@ -1,61 +1,181 @@
 'use client';
-import { useMemo, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, Plus, Trash2, X } from 'lucide-react';
-import { money, netWorth, sumPeople, withoutGold, type Person, type Snapshot, type Settings } from '@/lib/finance';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ArrowLeft, ArrowRight, Check, ChevronDown, Coins, Minus, Plus, RefreshCw, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { money, netWorth, sorted, sumPeople, withoutGold, type Person, type Settings, type Snapshot } from '@/lib/finance';
 
 type Payload = Omit<Snapshot, 'id'>;
-const id = () => crypto.randomUUID();
-const clonePeople = (items: Person[]) => items.map(p => ({...p, entries: p.entries.map(e => ({...e}))}));
-const clone = (s: Snapshot | undefined, settings: Settings): Payload => s ? {
-  date: s.date, bank: s.bank, ofii: s.ofii, redotpay: s.redotpay,
-  cash: s.cash, people: clonePeople(s.people), liabilities: clonePeople(s.liabilities),
-  gold: {...s.gold}, note: s.note ?? ''
-} : {date: new Date().toISOString(), bank: 0, ofii: 0, redotpay: 0, cash: 0,
-  people: [], liabilities: [], gold: {grams: settings.defaultGrams, karat: settings.defaultKarat, pricePerGram: 0}, note: ''};
-const round2 = (v: number) => Math.round((v + Number.EPSILON)*100)/100;
-function NumberInput({label, value, onChange, unit='€'}: {label:string,value:number,onChange:(n:number)=>void,unit?:string}) {
-  return <label className="field"><span>{label}</span><div className="number-input"><input type="number" min="0" step="0.01" inputMode="decimal" value={value} onChange={e=>onChange(round2(Number(e.target.value)))} /><b>{unit}</b></div></label>;
+type DebtSide = 'people' | 'liabilities';
+const uuid = () => crypto.randomUUID();
+const round = (value: number, precision = 2) => Number(value.toFixed(precision));
+const clonePeople = (items: Person[] = []) => items.map(p => ({...p, entries: p.entries.map(e => ({...e}))}));
+const copySnapshot = (s: Snapshot | undefined, settings: Settings): Payload => s ? {
+  date: s.date, bank: s.bank, ofii: s.ofii, redotpay: s.redotpay ?? 0, cash: s.cash,
+  people: clonePeople(s.people), liabilities: clonePeople(s.liabilities), gold: {...s.gold}, note: s.note ?? ''
+} : {
+  date: new Date().toISOString(), bank: 0, ofii: 0, redotpay: 0, cash: 0,
+  people: [], liabilities: [], gold: {grams: settings.defaultGrams, karat: settings.defaultKarat, pricePerGram: 0}, note: ''
+};
+
+function AmountInput({label, value, onChange, unit='€', digits=2}: {
+  label: string; value: number; onChange: (value:number)=>void; unit?:string; digits?:number;
+}) {
+  const [raw, setRaw] = useState(String(value));
+  const ref = useRef<HTMLInputElement>(null);
+  useEffect(() => {if (document.activeElement !== ref.current) setRaw(String(value));}, [value]);
+  return <label className="wizard-field"><span>{label}</span><span className="wizard-money-field">
+    <input ref={ref} inputMode="decimal" type="text" pattern="[0-9]*[.,]?[0-9]*" dir="ltr" value={raw}
+      onChange={e=>{
+        const next = e.target.value.replace(',', '.').replace(/[^0-9.]/g,'');
+        if ((next.match(/\./g) || []).length > 1) return;
+        setRaw(next);
+        const n = Number(next);
+        if (next !== '' && Number.isFinite(n)) onChange(round(n,digits));
+        if (next === '') onChange(0);
+      }}
+      onBlur={()=>setRaw(String(value))}
+      aria-label={label}/><b>{unit}</b>
+  </span></label>;
 }
-function PeopleEditor({title,description,value,onChange}: {title:string,description:string,value:Person[],onChange:(v:Person[])=>void}) {
-  const add = () => onChange([...value,{id:id(),name:'',entries:[{id:id(),amount:0}]}]);
-  return <div className="stack-sm"><div><h3 className="section-title">{title}</h3><p className="muted small">{description}</p></div>
-    {value.map((p,i)=><div className="person-editor" key={p.id}><div className="inline-fields"><input aria-label="اسم الشخص" placeholder="اسم الشخص" value={p.name} onChange={e=>onChange(value.map((v,n)=>n===i?{...v,name:e.target.value}:v))}/><button aria-label="حذف الشخص" type="button" className="icon-button dangerous" onClick={()=>onChange(value.filter((_,n)=>n!==i))}><Trash2 size={17}/></button></div>
-      {p.entries.map((en,j)=><div key={en.id} className="inline-fields"><div className="number-input grow"><input aria-label="قيمة الدين" type="number" min="0" step="0.01" value={en.amount} onChange={e=>onChange(value.map((v,n)=>n!==i?v:{...v,entries:v.entries.map((x,m)=>m===j?{...x,amount:round2(Number(e.target.value))}:x)}))}/><b>€</b></div><button type="button" className="icon-button" aria-label="حذف مبلغ" onClick={()=>onChange(value.map((v,n)=>n===i?{...v,entries:v.entries.filter((_,m)=>m!==j)}:v))}><X size={17}/></button></div>)}
-      <div className="person-footer"><strong>{money(p.entries.reduce((s,e)=>s+e.amount,0))}</strong><button type="button" className="link-button" onClick={()=>onChange(value.map((v,n)=>n===i?{...v,entries:[...v.entries,{id:id(),amount:0}]}:v))}><Plus size={15}/> مبلغ آخر</button></div>
-    </div>)}
-    <button className="button secondary full" type="button" onClick={add}><Plus size={18}/> إضافة شخص</button>
-    <div className="split-line"><span>المجموع</span><strong>{money(sumPeople(value))}</strong></div>
+
+function DebtInputs({people, onChange}: {people: Person[]; onChange:(value:Person[])=>void}) {
+  const update = (id:string, patch:Partial<Person>) => onChange(people.map(p=>p.id===id?{...p,...patch}:p));
+  return <div className="wizard-people-list">
+    {people.length===0&&<p className="wizard-empty-debts">لا توجد أسماء في هذا القسم بعد.</p>}
+    {people.map((p)=><section className="wizard-person" key={p.id}>
+      <div className="wizard-person-top">
+        <div className="wizard-person-avatar" aria-hidden="true">{p.name.trim().slice(0,2)||'؟'}</div>
+        <input placeholder="اسم الشخص" aria-label="اسم الشخص" value={p.name} maxLength={150} onChange={e=>update(p.id,{name:e.target.value})}/>
+        <button type="button" className="wizard-icon-danger" aria-label={`حذف ${p.name||'الشخص'}`} onClick={()=>onChange(people.filter(x=>x.id!==p.id))}><Trash2 size={19}/></button>
+      </div>
+      <div className="wizard-person-entries">{p.entries.map(en=><div className="wizard-person-entry" key={en.id}>
+        <span className="wizard-person-currency">€</span>
+        <input aria-label="قيمة المبلغ" inputMode="decimal" type="number" min="0" step="0.01" value={en.amount} onChange={e=>update(p.id,{entries:p.entries.map(x=>x.id===en.id?{...x,amount:round(Math.max(0,Number(e.target.value)||0))}:x)})}/>
+        <button type="button" className="wizard-icon-remove" aria-label="حذف المبلغ" onClick={()=>update(p.id,{entries:p.entries.filter(x=>x.id!==en.id)})}><X size={19}/></button>
+      </div>)}</div>
+      <div className="wizard-person-foot"><button type="button" className="wizard-add-entry" onClick={()=>update(p.id,{entries:[...p.entries,{id:uuid(),amount:0}]})}><Plus size={16}/> مبلغ آخر</button><strong dir="ltr">{money(sumPeople([p]))}</strong></div>
+    </section>)}
+    <button type="button" className="wizard-add-person" onClick={()=>onChange([...people,{id:uuid(),name:'',entries:[{id:uuid(),amount:0}]}])}><Plus size={23}/> إضافة شخص</button>
   </div>;
 }
-export default function SnapshotEditor({item,latest,settings,onClose,onSave,busy}: {item?:Snapshot,latest?:Snapshot,settings:Settings,onClose:()=>void,onSave:(data:Payload)=>Promise<void>,busy:boolean}) {
-  const [form,setForm] = useState<Payload>(()=>clone(item||latest,settings));
-  const [step,setStep]=useState(0);
-  const [error,setError]=useState('');
-  const [date,setDate] = useState(()=>{const d=new Date(item?.date||new Date().toISOString());const offset=d.getTimezoneOffset()*60000;return new Date(d.getTime()-offset).toISOString().slice(0,16)});
-  const prev=useMemo(()=>{ if(!item) return latest; return undefined; },[item,latest]);
-  const draft = {...form,id:item?.id||'draft'};
-  const change = (patch:Partial<Payload>)=>setForm(f=>({...f,...patch}));
-  const save = async()=>{
-    if([...form.people,...form.liabilities].some(p=>!p.name.trim())) {setError('أدخل اسمًا لكل شخص أو احذف الصف الفارغ');setStep(1);return;}
-    if([form.bank,form.ofii,form.redotpay,form.cash,form.gold.grams,form.gold.pricePerGram].some(n=>!Number.isFinite(n)||n<0)) {setError('تحقق من الأرقام: يجب أن تكون أرقامًا صالحة وغير سالبة');return;}
-    try {setError('');await onSave({...form,date:item?.date||new Date(date).toISOString()});}catch(e){setError(e instanceof Error?e.message:'تعذّر الحفظ');}
-  };
-  return <div className="overlay" role="dialog" aria-modal="true" aria-label={item?'تعديل قراءة':'إضافة قراءة'}><div className="sheet">
-    <header className="sheet-header"><button type="button" aria-label="إغلاق" className="icon-button" onClick={onClose}><X size={21}/></button><div><strong>{item?'تعديل قراءة سابقة':'قراءة مالية جديدة'}</strong><p className="muted small">الخطوة {step+1} من 4</p></div><span className="header-mini">{money(withoutGold(draft))}</span></header>
-    <div className="steps">{['الأرصدة','الديون','الذهب','المراجعة'].map((t,i)=><button type="button" key={t} onClick={()=>setStep(i)} className={step===i?'current':step>i?'done':''} aria-label={t}>{t}</button>)}</div>
-    <div className="sheet-body stack">
-      {step===0&&<><div className="section-intro"><h2>الأرصدة الحالية</h2><p>أدخل المبالغ الموجودة بالفعل، وليس قيمة المصروفات.</p></div>
-        {!item&&<label className="field"><span>تاريخ القراءة</span><input type="datetime-local" value={date} onChange={e=>setDate(e.target.value)}/></label>}
-        <NumberInput label="الحساب البنكي" value={form.bank} onChange={n=>change({bank:n})}/><NumberInput label="رصيد OFII / ADA" value={form.ofii} onChange={n=>change({ofii:n})}/><NumberInput label="محفظة Redotpay" value={form.redotpay} onChange={n=>change({redotpay:n})}/><NumberInput label="النقد (الكاش)" value={form.cash} onChange={n=>change({cash:n})}/>
-      </>}
-      {step===1&&<><PeopleEditor title="ديون لي" description="المبالغ المستحقة لك عند الآخرين وتُضاف لصافي المال" value={form.people} onChange={v=>change({people:v})}/><div className="soft-divider"/><PeopleEditor title="ديون عليّ" description="المبالغ التي يجب عليك دفعها وتُخصم من صافي المال" value={form.liabilities} onChange={v=>change({liabilities:v})}/></>}
-      {step===2&&<><div className="section-intro"><h2>مدخرات الذهب</h2><p>السعر يُسجل داخل القراءة نفسها للمحافظة على الأسعار التاريخية.</p></div><NumberInput label="وزن الذهب" unit="جرام" value={form.gold.grams} onChange={n=>change({gold:{...form.gold,grams:n}})}/><label className="field"><span>العيار</span><select value={form.gold.karat} onChange={e=>change({gold:{...form.gold,karat:Number(e.target.value)}})}>{[24,22,21,18].map(k=><option key={k} value={k}>{k} قيراط</option>)}</select></label><NumberInput label="سعر الجرام المحفوظ" value={form.gold.pricePerGram} onChange={n=>change({gold:{...form.gold,pricePerGram:n}})}/><div className="gold-preview"><span>قيمة الذهب</span><strong>{money(form.gold.grams*form.gold.pricePerGram)}</strong></div></>}
-      {step===3&&<><div className="review-hero"><span>صافي الأصول دون الذهب</span><strong>{money(withoutGold(draft))}</strong><div className="review-line"><span>الصافي مع الذهب</span><b>{money(netWorth(draft))}</b></div></div>
-        <div className="summary-list"><div><span>السيولة</span><b>{money(form.bank+form.ofii+form.redotpay+form.cash)}</b></div><div><span>ديون لك</span><b className="positive">+{money(sumPeople(form.people))}</b></div><div><span>ديون عليك</span><b className="negative">−{money(sumPeople(form.liabilities))}</b></div><div><span>الذهب</span><b>{money(form.gold.grams*form.gold.pricePerGram)}</b></div>{prev&&<div><span>التغير دون الذهب</span><b>{money(withoutGold(draft)-withoutGold(prev))}</b></div>}</div>
-        <label className="field"><span>ملاحظة (اختياري)</span><textarea rows={3} maxLength={2000} value={form.note||''} onChange={e=>change({note:e.target.value})} placeholder="أي تفاصيل تريد تذكرها عن هذه القراءة"/></label><p className="muted small">الحسابات مبنية على فروق الأرصدة، وليس تصنيف المعاملات. ستُحفظ هذه القراءة في قاعدة البيانات الأصلية.</p>
-      </>}
+
+const titles = ['الأرصدة','الديون','الذهب','المراجعة'];
+const balances: {field:'bank'|'ofii'|'redotpay'|'cash';label:string}[] = [
+  {field:'bank',label:'رصيد البنك'}, {field:'ofii',label:'رصيد OFII'},
+  {field:'redotpay',label:'محفظة Redotpay'}, {field:'cash',label:'الكاش في اليد'}
+];
+
+export default function SnapshotEditor({item,latest,snapshots,settings,onClose,onSave,busy}: {
+  item?: Snapshot; latest?: Snapshot; snapshots?: Snapshot[]; settings: Settings;
+  onClose:()=>void; onSave:(data:Payload)=>Promise<void>; busy:boolean;
+}) {
+  const [form,setForm] = useState<Payload>(()=>copySnapshot(item??latest,settings));
+  const [step,setStep] = useState(0);
+  const [debtSide,setDebtSide] = useState<DebtSide>('people');
+  const [error,setError] = useState('');
+  const [goldBusy,setGoldBusy] = useState(false);
+  const [goldHint,setGoldHint] = useState('');
+  const autoGold = useRef(false);
+  const [date,setDate] = useState(()=>{
+    const d = new Date(item?.date ?? new Date().toISOString());
+    return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
+  });
+  const patch = (partial:Partial<Payload>) => setForm(current=>({...current,...partial}));
+  const draft: Snapshot = {...form,id:item?.id??'preview'};
+  const prev = useMemo(()=>{
+    if (!item) return latest;
+    if (!snapshots) return undefined;
+    const ordered = sorted(snapshots);
+    const index = ordered.findIndex(s=>s.id===item.id);
+    return index>0?ordered[index-1]:undefined;
+  },[item,latest,snapshots]);
+  const delta = prev?withoutGold(draft)-withoutGold(prev):0;
+  const lines = useMemo(()=>{
+    if (!prev)return [];
+    return [
+      {name:'البنك',change:form.bank-prev.bank},
+      {name:'OFII',change:form.ofii-prev.ofii},
+      {name:'Redotpay',change:form.redotpay-prev.redotpay},
+      {name:'الكاش',change:form.cash-prev.cash},
+      {name:'ديون لي',change:sumPeople(form.people)-sumPeople(prev.people)},
+      {name:'ديون عليّ',change:sumPeople(prev.liabilities)-sumPeople(form.liabilities)}
+    ].filter(x=>Math.abs(x.change)>0.004);
+  },[form,prev]);
+
+  const refreshGold = useCallback(async (silent=false)=>{
+    setGoldBusy(true);setGoldHint('');
+    try {
+      const res=await fetch(`/api/gold-live?karat=${form.gold.karat}`,{cache:'no-store'});
+      const body=await res.json();
+      if (!res.ok || !(Number(body.pricePerGram)>0))throw Error(body?.error||'تعذّر جلب السعر الآن');
+      setForm(current=>({...current,gold:{...current.gold,pricePerGram:Number(body.pricePerGram)}}));
+      if (!silent)setGoldHint('تم جلب السعر. سيُحفظ فقط بعد تأكيد القراءة.');
+    } catch(e) {
+      if(!silent)setGoldHint(e instanceof Error?e.message:'تعذّر جلب السعر. يمكنك إدخاله يدويًا.');
+    } finally {setGoldBusy(false);}
+  },[form.gold.karat]);
+  useEffect(()=>{
+    if(step===2 && !item && !autoGold.current){autoGold.current=true;void refreshGold(true);}
+  },[step,item,refreshGold]);
+  useEffect(()=>{
+    const before=document.body.style.overflow;
+    document.body.style.overflow='hidden';
+    return()=>{document.body.style.overflow=before;};
+  },[]);
+  async function save(){
+    if([...form.people,...form.liabilities].some(p=>!p.name.trim()||p.entries.some(e=>!Number.isFinite(e.amount)||e.amount<0))){
+      setError('أدخل اسمًا ومبالغ صحيحة لكل شخص أو احذف الصف الفارغ.');setStep(1);return;
+    }
+    if ([form.bank,form.ofii,form.redotpay,form.cash,form.gold.grams,form.gold.pricePerGram].some(n=>!Number.isFinite(n)||n<0)){
+      setError('يرجى التأكد من صحة جميع المبالغ.');return;
+    }
+    if (!item && !Number.isFinite(new Date(date).getTime())) {setError('يرجى اختيار تاريخ صالح.');return;}
+    try{setError('');await onSave({...form,date:item?.date??new Date(date).toISOString()});}
+    catch(e){setError(e instanceof Error?e.message:'تعذّر حفظ القراءة.');}
+  }
+  return <div className="wizard-overlay" role="dialog" aria-modal="true" aria-label={item?'تعديل قراءة':'قراءة جديدة'}>
+    <div className="wizard-sheet" dir="rtl">
+      <header className="wizard-header">
+        <button type="button" className="wizard-close" aria-label="إغلاق" onClick={onClose}><X size={24}/></button>
+        <div className="wizard-heading"><h2>{item?'تعديل قراءة':'قراءة جديدة'}</h2><p>خطوة {step+1} من 4 · {titles[step]}</p></div>
+        <strong className="wizard-running-total" dir="ltr">{money(withoutGold(draft))}</strong>
+      </header>
+      <div className="wizard-progress" aria-label={`الخطوة ${step+1} من 4`}>
+        {titles.map((title,i)=><button key={title} type="button" aria-label={`انتقل إلى ${title}`} aria-current={step===i?'step':undefined} className={i<=step?'active':''} onClick={()=>{setStep(i);setError('');}}/>)}
+      </div>
+      <div className="wizard-content" key={step}>
+        {step===0&&<><p className="wizard-instructions">اكتب المبالغ الحالية كما هي الآن — ليست مصروفات، بل رصيد اللحظة.</p>
+          {balances.map(({field,label})=><AmountInput key={field} label={label} value={form[field]} onChange={n=>patch({[field]:n})}/>)}
+        </>}
+        {step===1&&<><p className="wizard-instructions">سجّل الأموال المستحقة لك أو التي عليك، مع تفاصيل كل شخص.</p>
+          <div className="wizard-debt-switch" role="group" aria-label="نوع الدين"><button type="button" className={debtSide==='people'?'selected':''} onClick={()=>setDebtSide('people')}>ديون لي</button><button type="button" className={debtSide==='liabilities'?'selected':''} onClick={()=>setDebtSide('liabilities')}>ديون عليّ</button></div>
+          <p className="wizard-debt-description">{debtSide==='people'?'الفلوس اللي عند الناس ولسه ما رجعتش لك.':'المبالغ التي عليك دفعها وتُخصم من صافي أموالك.'}</p>
+          <DebtInputs people={form[debtSide]} onChange={value=>patch({[debtSide]:value})}/>
+          <div className="wizard-debt-total"><span>إجمالي {debtSide==='people'?'الديون لي':'الديون عليّ'}</span><strong dir="ltr">{money(sumPeople(form[debtSide]))}</strong></div>
+        </>}
+        {step===2&&<>
+          <AmountInput label="الجرامات" unit="جم" digits={4} value={form.gold.grams} onChange={n=>patch({gold:{...form.gold,grams:n}})}/>
+          <div className="wizard-field"><span>العيار</span><div className="wizard-karats" role="group" aria-label="عيار الذهب">{[24,22,21,18].map(k=><button type="button" key={k} className={k===form.gold.karat?'selected':''} onClick={()=>patch({gold:{...form.gold,karat:k}})}>{k}k</button>)}</div></div>
+          <AmountInput label="سعر الجرام" value={form.gold.pricePerGram} onChange={n=>patch({gold:{...form.gold,pricePerGram:n}})}/>
+          <p className="wizard-help">يمكن جلب السعر المباشر حسب العيار، أو تعديله يدويًا. عند تعديل قراءة قديمة لا نغيّر سعرها التاريخي تلقائيًا.</p>
+          <button className="wizard-gold-refresh" type="button" disabled={goldBusy} onClick={()=>void refreshGold()}><RefreshCw size={21} className={goldBusy?'spin':''}/>{goldBusy?'جاري جلب السعر…':'جلب السعر المباشر'}</button>
+          {goldHint&&<p className="wizard-help" role="status">{goldHint}</p>}
+          <div className="wizard-gold-total"><span>قيمة الذهب</span><strong dir="ltr">{money(form.gold.grams*form.gold.pricePerGram)}</strong><Coins size={23}/></div>
+        </>}
+        {step===3&&<><div className="wizard-review-hero"><span>إجمالي القراءة بدون الذهب</span><strong dir="ltr">{money(withoutGold(draft))}</strong>
+          <span className={`wizard-review-delta ${delta<0?'down':delta>0?'up':''}`}>{!prev?<><Minus size={17}/> أول قراءة</>:delta===0?<><Minus size={17}/> لا تغيير عن القراءة السابقة</>:delta>0?<><TrendingUp size={19}/> زيادة {money(delta)}</>:<><TrendingDown size={19}/> صرف {money(Math.abs(delta))}</>}</span>
+          <div className="wizard-review-with-gold"><span>مع الذهب</span><strong dir="ltr">{money(netWorth(draft))}</strong></div></div>
+          <p className="wizard-help">المصروف يُحسب من الأصول بدون الذهب فقط؛ قيمة الذهب تتغيّر مع سعر السوق.</p>
+          <div className="wizard-diff-list">{lines.length?lines.map(line=><div key={line.name}><span>{line.name}</span><strong className={line.change<0?'negative':'positive'} dir="ltr">{line.change>0?'+':'−'} {money(Math.abs(line.change))}</strong></div>):<p>لا يوجد أي تغيير في الأرصدة.</p>}</div>
+          {!item&&<details className="wizard-date-details"><summary>تعديل تاريخ القراءة <ChevronDown size={16}/></summary><input type="datetime-local" value={date} onChange={e=>setDate(e.target.value)} aria-label="تاريخ القراءة"/></details>}
+          <label className="wizard-notes"><textarea placeholder="ملاحظة اختيارية… مثال: اشتريت حبر، دفعت 20 يورو" rows={3} maxLength={2000} value={form.note??''} onChange={e=>patch({note:e.target.value})}/></label>
+          <p className="wizard-help">الملاحظة اختيارية ولا تدخل في حساب المصروف — الحساب يعتمد على فرق المجاميع فقط.</p>
+        </>}
+      </div>
+      {error&&<div className="wizard-error" role="alert">{error}</div>}
+      <footer className="wizard-footer">
+        {step>0&&<button type="button" disabled={busy} className="wizard-back" onClick={()=>{setStep(x=>x-1);setError('');}}>رجوع <ArrowRight size={18}/></button>}
+        <button type="button" disabled={busy||goldBusy} className="wizard-next" onClick={()=>step===3?void save():setStep(x=>x+1)}>{busy?'جاري الحفظ...':step===3?item?'حفظ التعديل':'حفظ القراءة':'التالي'}{step===3?<Check size={21}/>:<ArrowLeft size={21}/>}</button>
+      </footer>
     </div>
-    {error&&<p className="alert-error" role="alert">{error}</p>}
-    <footer className="sheet-footer">{step>0&&<button type="button" className="button secondary" onClick={()=>setStep(s=>s-1)} disabled={busy}><ArrowRight size={17}/> السابق</button>}<button type="button" className="button primary grow" disabled={busy} onClick={()=>step===3?void save():setStep(s=>s+1)}>{busy?'جارٍ الحفظ...':step===3?item?'حفظ التعديلات':'حفظ القراءة':'التالي'}{step===3?<Check size={18}/>:<ArrowLeft size={18}/>}</button></footer>
-  </div></div>;
+  </div>;
 }
