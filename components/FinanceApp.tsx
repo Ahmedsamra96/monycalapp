@@ -1,10 +1,10 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ArrowDownLeft, ArrowUpRight, BarChart3, CalendarClock, Check, ChevronLeft, Coins, Download, HandCoins, Home, Landmark, Menu, Pencil, Plus, RefreshCw, Settings2, ShieldCheck, Trash2, Users, Wallet, X } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { currentMonth, dateLabel, goldValue, liquid, money, monthKey, monthLabel, monthStatistics, netWorth, number, sorted, sumPeople, toCSV, withoutGold, type AppData, type Person, type Settings, type Snapshot } from '@/lib/finance';
 import SnapshotEditor from './SnapshotEditor';
 import HomeOverview from './HomeOverview';
+import HistoryLog from './HistoryLog';
 import InstallApp from './InstallApp';
 
 type Tab='home'|'history'|'debts'|'gold'|'settings';
@@ -32,7 +32,6 @@ export default function FinanceApp() {
   const [tab,setTab]=useState<Tab>('home');
   const [editing,setEditing]=useState<Snapshot|null|undefined>(undefined);
   const [menuOpen,setMenuOpen]=useState(false);
-  const [month,setMonth]=useState(currentMonth());
   const [mode,setMode]=useState<DebtType>('people');
   const [debtAction,setDebtAction]=useState<DebtAction|null>(null);
   const [debtName,setDebtName]=useState('');
@@ -52,8 +51,6 @@ export default function FinanceApp() {
   const latest=snaps.at(-1);
   const previous=snaps.at(-2);
   const thisMonth=monthStatistics(snaps,currentMonth());
-  const availableMonths=useMemo(()=>[...new Set([currentMonth(),...snaps.map(s=>monthKey(s.date))])].sort().reverse(),[snaps]);
-  const activeMonth=monthStatistics(snaps,month);
 
   async function changeSnapshot(payload:Omit<Snapshot,'id'>, editId?:string) {
     setBusy(true);setError('');
@@ -131,10 +128,7 @@ export default function FinanceApp() {
         {!data&&!loading?<div className="error-state"><RefreshCw size={32}/><h2>تعذّر تحميل البيانات</h2><p>لن تُعرض بيانات تجريبية أو قديمة. راجع إعدادات Supabase ثم حاول مجددًا.</p><button className="button button-primary" onClick={()=>void refresh()}>إعادة المحاولة</button></div>:null}
         {data&&<>
           {tab==='home'&&<HomeOverview snapshots={snaps} latest={latest} previous={previous} month={thisMonth} settings={data.settings} onNew={()=>setEditing(null)} onHistory={()=>navigate('history')} onGold={()=>navigate('gold')} onEdit={setEditing}/>}
-          {tab==='history'&&<><div className="page-heading"><div><span className="eyebrow">تحليل البيانات</span><h1>سجل القراءات</h1><p>تصفح الأشهر، اعرف فروق الأرصدة، وعدّل أي قراءة سابقة.</p></div><div className="heading-buttons"><button className="button button-muted" onClick={exportCsv}><Download size={17}/> تصدير CSV</button><button className="button button-primary" onClick={()=>setEditing(null)}><Plus size={17}/> إضافة قراءة</button></div></div>
-          <div className="period-picker"><label>الفترة الزمنية</label><select value={month} onChange={e=>setMonth(e.target.value)}>{availableMonths.map(m=><option key={m} value={m}>{monthLabel(m)}</option>)}</select><span>{activeMonth?.items.length||0} قراءة</span></div>
-          {activeMonth?<><div className="mini-stats"><StatMini label="رصيد بداية الفترة (بدون ذهب)" value={money(withoutGold(activeMonth.items[0]))}/><StatMini label="آخر رصيد (بدون ذهب)" value={money(withoutGold(activeMonth.items.at(-1)!))}/><StatMini label="الانخفاضات المحسوبة" value={money(activeMonth.spent)} tone="red"/><StatMini label="الزيادات المحسوبة" value={money(activeMonth.received)} tone="green"/><StatMini label="صافي التغير" value={money(activeMonth.net)} tone={activeMonth.net<0?'red':'green'}/>{data.settings.monthlyBudget!==null&&<StatMini label="المتبقي من الميزانية" value={money(data.settings.monthlyBudget-activeMonth.spent)}/>}</div><section className="panel"><div className="panel-header"><div><h2>منحنى الفترة</h2><p>الأرصدة بدون الذهب، لا يتأثر بتقلب سعر الذهب</p></div></div>{activeMonth.items.length>1?<div className="chart-wrap"><WealthChart snapshots={activeMonth.items} noGold/></div>:<Empty text="قراءة واحدة لا تكفي لرسم مقارنة."/>}</section></>:<Empty text="لا توجد قراءات في هذا الشهر."/>}
-          <section className="panel"><div className="panel-header"><div><h2>القراءات المسجّلة</h2><p>جميع القراءات محفوظة بتاريخها الأصلي</p></div></div><div className="history-rows">{[...(activeMonth?.items||[])].reverse().map(s=>{const index=snaps.findIndex(x=>x.id===s.id);const before=index>0?snaps[index-1]:undefined;return <div className="history-row" key={s.id}><span className="history-date-icon"><CalendarClock size={18}/></span><div className="history-name"><b>{dateLabel(s.date)}</b><small>{s.note||'بدون ملاحظة'}{before?` · ${withoutGold(s)-withoutGold(before)<0?'انخفاض':'ارتفاع'} ${money(Math.abs(withoutGold(s)-withoutGold(before)))}`:''}</small></div><strong>{money(netWorth(s))}</strong><button title="تعديل" className="icon-control" onClick={()=>setEditing(s)}><Pencil size={17}/></button><button title="حذف" className="icon-control danger" disabled={busy} onClick={()=>void removeSnapshot(s)}><Trash2 size={17}/></button></div>})}</div></section></>}
+          {tab==='history'&&<HistoryLog snapshots={snaps} busy={busy} onEdit={setEditing} onDelete={s=>void removeSnapshot(s)}/>}
           {tab==='debts'&&<><div className="page-heading"><div><span className="eyebrow">تنظيم الالتزامات</span><h1>ديونك ومستحقاتك</h1><p>استلام دين أو سداده يحوّل الرصيد دون اعتباره مصروفًا أو دخلًا جديدًا.</p></div></div>
             <div className="segment"><button className={mode==='people'?'active':''} onClick={()=>setMode('people')}>ديون لي <span>{money(latest?sumPeople(latest.people):0)}</span></button><button className={mode==='liabilities'?'active':''} onClick={()=>setMode('liabilities')}>ديون عليّ <span>{money(latest?sumPeople(latest.liabilities):0)}</span></button></div>
             {!latest?<Empty text="أضف قراءة مالية لبدء إدارة الديون."/>:<><div className="info-banner">{mode==='people'?'عند استلام مبلغ، ينقص الدين ويزيد رصيد الحساب المختار بنفس القيمة.':'عند سداد مبلغ، ينقص الدين وينقص رصيد الحساب المختار بنفس القيمة.'}</div><div className="debts-summary"><div><small>{mode==='people'?'مستحق لك':'مستحق عليك'}</small><strong>{money(sumPeople(latest[mode]))}</strong></div><button className="button button-primary" onClick={()=>openDebt({type:'new',key:mode})}><Plus size={17}/> إضافة شخص</button></div><div className="debt-grid">{latest[mode].map(p=><div className="panel debt-person" key={p.id}><div className="debt-person-head"><span className="avatar-small">{p.name.charAt(0)}</span><div><h3>{p.name}</h3><small>{p.entries.length} مبالغ</small></div><strong>{money(sumPeople([p]))}</strong></div><div className="debt-pills">{p.entries.map(e=><span key={e.id}>{money(e.amount)}</span>)}</div><div className="debt-actions"><button className="button button-muted" onClick={()=>openDebt({type:'add',key:mode,person:p})}><Plus size={16}/> مبلغ إضافي</button><button className="button button-primary" disabled={sumPeople([p])<=0} onClick={()=>openDebt({type:'settle',key:mode,person:p})}>{mode==='people'?'استلام مبلغ':'سداد مبلغ'}</button></div></div>)}{!latest[mode].length&&<Empty text="لا توجد ديون في هذا القسم."/>}</div></>}
@@ -156,8 +150,3 @@ export default function FinanceApp() {
   </div>;
 }
 function StatCard({title,amount,icon,color,subtitle}:{title:string,amount:number,icon:React.ReactNode,color:string,subtitle:string}) {return <div className="stat-card"><div className={`stat-icon ${color}`}>{icon}</div><span>{title}</span><strong dir="ltr">{money(amount)}</strong><small>{subtitle}</small></div>;}
-function StatMini({label,value,tone}:{label:string,value:string,tone?:string}) {return <div className="mini-stat"><span>{label}</span><strong className={tone||''}>{value}</strong></div>;}
-function WealthChart({snapshots,noGold=false}:{snapshots:Snapshot[],noGold?:boolean}) {
-  const points=snapshots.map((s,i)=>({name:new Intl.DateTimeFormat('ar-EG-u-nu-latn',{day:'numeric',month:'short'}).format(new Date(s.date)),label:dateLabel(s.date),value:noGold?withoutGold(s):netWorth(s),index:i}));
-  return <ResponsiveContainer width="100%" height="100%"><AreaChart data={points} margin={{top:12,right:4,left:4,bottom:0}}><defs><linearGradient id="maliGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#3f75e8" stopOpacity={0.23}/><stop offset="1" stopColor="#3f75e8" stopOpacity={0}/></linearGradient></defs><CartesianGrid strokeDasharray="4 5" stroke="#edf0f6" vertical={false}/><XAxis dataKey="name" tick={{fill:'#8791a7',fontSize:11}} axisLine={false} tickLine={false}/><YAxis hide domain={['auto','auto']}/><Tooltip contentStyle={{borderRadius:15,border:'1px solid #e9edf5',direction:'rtl',fontSize:12}} formatter={(value)=>[money(Number(value)),'القيمة']}/><Area dataKey="value" type="monotone" stroke="#3f75e8" strokeWidth={3} fill="url(#maliGradient)" dot={{r:3,strokeWidth:2,fill:'#fff'}} activeDot={{r:5}}/></AreaChart></ResponsiveContainer>;
-}

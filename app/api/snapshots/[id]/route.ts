@@ -12,7 +12,9 @@ export async function PUT(req: NextRequest, ctx: Ctx) {
   const parsed = snapshotPayload.safeParse(await req.json().catch(()=>null));
   if (!parsed.success) return NextResponse.json({error:'تحقق من صحة القيم'}, {status:400});
   try {
-    const {data,error} = await db().from('snapshots').update(toSnapshotRow(parsed.data)).eq('id',id).select('*').maybeSingle();
+    // Editing any field must not rewrite the original recording time.
+    const {recorded_at: _recordedAt, ...fields} = toSnapshotRow(parsed.data);
+    const {data,error} = await db().from('snapshots').update(fields).eq('id',id).select('*').maybeSingle();
     if (error) throw error;
     if (!data) return NextResponse.json({error:'القراءة غير موجودة'}, {status:404});
     return NextResponse.json(fromSnapshotRow(data));

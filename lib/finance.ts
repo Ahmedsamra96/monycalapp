@@ -22,6 +22,21 @@ export const liquid = (s: Snapshot) => s.bank + s.ofii + s.redotpay + s.cash;
 export const goldValue = (s: Snapshot) => s.gold.grams * s.gold.pricePerGram;
 export const withoutGold = (s: Snapshot) => liquid(s) + sumPeople(s.people) - sumPeople(s.liabilities);
 export const netWorth = (s: Snapshot) => withoutGold(s) + goldValue(s);
+
+/** Which balance sources changed between two recorded snapshots (gold-price changes are excluded). */
+export function snapshotChanges(before: Snapshot, current: Snapshot): {label:string,delta:number}[] {
+  const changes = [
+    {label:'البنك',delta:current.bank-before.bank},
+    {label:'OFII',delta:current.ofii-before.ofii},
+    {label:'Redotpay',delta:current.redotpay-before.redotpay},
+    {label:'كاش',delta:current.cash-before.cash},
+    {label:'ديون لي',delta:sumPeople(current.people)-sumPeople(before.people)},
+    // An increased liability is a decrease in the net balance.
+    {label:'ديون عليّ',delta:sumPeople(before.liabilities)-sumPeople(current.liabilities)},
+  ];
+  return changes.filter(x=>Math.abs(x.delta)>=0.005);
+}
+
 export const sorted = (list: Snapshot[]) => [...list].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 export const monthKey = (date: string) => { const d = new Date(date); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; };
 export const currentMonth = () => monthKey(new Date().toISOString());

@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Check, ChevronDown, Coins, Minus, Plus, RefreshCw, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Check, Coins, Minus, Plus, RefreshCw, Trash2, TrendingDown, TrendingUp, X } from 'lucide-react';
 import { money, netWorth, sorted, sumPeople, withoutGold, type Person, type Settings, type Snapshot } from '@/lib/finance';
 
 type Payload = Omit<Snapshot, 'id'>;
@@ -68,17 +68,13 @@ export default function SnapshotEditor({item,latest,snapshots,settings,onClose,o
   item?: Snapshot; latest?: Snapshot; snapshots?: Snapshot[]; settings: Settings;
   onClose:()=>void; onSave:(data:Payload)=>Promise<void>; busy:boolean;
 }) {
-  const [form,setForm] = useState<Payload>(()=>copySnapshot(item??latest,settings));
+  const [form,setForm] = useState<Payload>(()=>({...copySnapshot(item??latest,settings),date:item?.date??new Date().toISOString()}));
   const [step,setStep] = useState(0);
   const [debtSide,setDebtSide] = useState<DebtSide>('people');
   const [error,setError] = useState('');
   const [goldBusy,setGoldBusy] = useState(false);
   const [goldHint,setGoldHint] = useState('');
   const autoGold = useRef(false);
-  const [date,setDate] = useState(()=>{
-    const d = new Date(item?.date ?? new Date().toISOString());
-    return new Date(d.getTime() - d.getTimezoneOffset()*60000).toISOString().slice(0,16);
-  });
   const patch = (partial:Partial<Payload>) => setForm(current=>({...current,...partial}));
   const draft: Snapshot = {...form,id:item?.id??'preview'};
   const prev = useMemo(()=>{
@@ -128,8 +124,7 @@ export default function SnapshotEditor({item,latest,snapshots,settings,onClose,o
     if ([form.bank,form.ofii,form.redotpay,form.cash,form.gold.grams,form.gold.pricePerGram].some(n=>!Number.isFinite(n)||n<0)){
       setError('يرجى التأكد من صحة جميع المبالغ.');return;
     }
-    if (!item && !Number.isFinite(new Date(date).getTime())) {setError('يرجى اختيار تاريخ صالح.');return;}
-    try{setError('');await onSave({...form,date:item?.date??new Date(date).toISOString()});}
+    try{setError('');await onSave({...form,date:item?.date??new Date().toISOString()});}
     catch(e){setError(e instanceof Error?e.message:'تعذّر حفظ القراءة.');}
   }
   return <div className="wizard-overlay" role="dialog" aria-modal="true" aria-label={item?'تعديل قراءة':'قراءة جديدة'}>
@@ -166,7 +161,6 @@ export default function SnapshotEditor({item,latest,snapshots,settings,onClose,o
           <div className="wizard-review-with-gold"><span>مع الذهب</span><strong dir="ltr">{money(netWorth(draft))}</strong></div></div>
           <p className="wizard-help">المصروف يُحسب من الأصول بدون الذهب فقط؛ قيمة الذهب تتغيّر مع سعر السوق.</p>
           <div className="wizard-diff-list">{lines.length?lines.map(line=><div key={line.name}><span>{line.name}</span><strong className={line.change<0?'negative':'positive'} dir="ltr">{line.change>0?'+':'−'} {money(Math.abs(line.change))}</strong></div>):<p>لا يوجد أي تغيير في الأرصدة.</p>}</div>
-          {!item&&<details className="wizard-date-details"><summary>تعديل تاريخ القراءة <ChevronDown size={16}/></summary><input type="datetime-local" value={date} onChange={e=>setDate(e.target.value)} aria-label="تاريخ القراءة"/></details>}
           <label className="wizard-notes"><textarea placeholder="ملاحظة اختيارية… مثال: اشتريت حبر، دفعت 20 يورو" rows={3} maxLength={2000} value={form.note??''} onChange={e=>patch({note:e.target.value})}/></label>
           <p className="wizard-help">الملاحظة اختيارية ولا تدخل في حساب المصروف — الحساب يعتمد على فرق المجاميع فقط.</p>
         </>}
