@@ -67,7 +67,7 @@ export default function HistoryLog({ snapshots, busy, onEdit, onDelete }: Props)
               <span>ذهب <b dir="ltr">{money(goldValue(item))}</b></span>
               {delta === null ? <small className="reading-delta neutral">أول قراءة</small> :
                 <small className={`reading-delta ${delta < -zeroTolerance ? 'negative' : delta > zeroTolerance ? 'positive' : 'neutral'}`}>
-                  {delta < -zeroTolerance ? <><TrendingDown size={14}/> صرف <b dir="ltr">{money(Math.abs(delta))}</b></> :
+                  {delta < -zeroTolerance ? <><TrendingDown size={14}/> نقص في الإجمالي <b dir="ltr">{money(Math.abs(delta))}</b></> :
                     delta > zeroTolerance ? <><TrendingUp size={14}/> زيادة <b dir="ltr">{money(delta)}</b></> : 'لا تغيير في الإجمالي'}
                 </small>}
             </div>
@@ -86,6 +86,6 @@ export default function HistoryLog({ snapshots, busy, onEdit, onDelete }: Props)
         </article>;
       })}
     </div> : <div className="readings-empty"><CalendarDays size={30}/><p>لا توجد قراءات مسجّلة في هذه الفترة.</p></div>}
-    <p className="readings-explainer">إجمالي المصروفات هو مجموع الانخفاضات الصافية بين القراءات المعروضة وسابقاتها، دون احتساب تغيّر أسعار الذهب أو احتساب الزيادات كمصروفات.</p>
+    <p className="readings-explainer">إجمالي المصروفات يحسب من تغيّر الأرصدة النقدية مع استبعاد حركات أصل الديون والتحويلات المرتبطة بها وسعر الذهب. أما فرق إجمالي الأموال المعروض في كل قراءة فيشمل الديون.</p>
   </section>;
 }

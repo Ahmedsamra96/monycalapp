@@ -75,7 +75,7 @@ export default function HomeOverview({snapshots,latest,previous,month,settings,o
     <section className="overview-month-card" aria-label="مصروف الشهر">
       <h2>مصروف {monthLabel(currentMonth())} المحسوب</h2>
       <strong className="overview-spent" dir="ltr">{euro(month?.spent??0)}</strong>
-      <p>محسوب من فروقات {month?.items.length??0} قراءات — دون تسجيل مصروفات يدوية.</p>
+      <p>محسوب من فروقات {month?.items.length??0} قراءات — دون احتساب إضافة الديون أو سدادها أو استلامها كمصروفات.</p>
       <div className="overview-gained">زيادات في نفس الشهر: <span dir="ltr">{euro(month?.received??0)}</span></div>
     </section>
 
@@ -94,7 +94,7 @@ export default function HomeOverview({snapshots,latest,previous,month,settings,o
           const delta=previousSnapshot?withoutGold(s)-withoutGold(previousSnapshot):null;
           return <button className="overview-reading" type="button" key={s.id} onClick={()=>onEdit(s)} aria-label={`تعديل قراءة ${shortDate(s.date)}`}>
             <div className="overview-reading-info"><strong>{dateLabel(s.date)}</strong>{s.note&&<small title={s.note}>{s.note}</small>}</div>
-            <div className="overview-reading-totals"><strong dir="ltr">{euro(withoutGold(s))}</strong>{delta!==null&&<small className={delta<0?'down':'up'}>{delta<0?'صرف':'زيادة'} <span dir="ltr">{euro(Math.abs(delta))}</span></small>}</div>
+            <div className="overview-reading-totals"><strong dir="ltr">{euro(withoutGold(s))}</strong>{delta!==null&&<small className={delta<0?'down':'up'}>{delta<0?'نقص في الإجمالي':'زيادة في الإجمالي'} <span dir="ltr">{euro(Math.abs(delta))}</span></small>}</div>
           </button>;
         })}
       </div>}

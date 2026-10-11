@@ -23,6 +23,31 @@ export const goldValue = (s: Snapshot) => s.gold.grams * s.gold.pricePerGram;
 export const withoutGold = (s: Snapshot) => liquid(s) + sumPeople(s.people) - sumPeople(s.liabilities);
 export const netWorth = (s: Snapshot) => withoutGold(s) + goldValue(s);
 
+/**
+ * Budget-only balance change between readings.
+ *
+ * Debt principal is part of net worth (withoutGold), but is NOT spending or
+ * income. Ignore changes in the receivables/payables ledger itself. A matching
+ * cash/bank movement can be a loan payout, borrowing or debt settlement; omit
+ * that transfer as well, up to the matching change in debt principal.
+ *
+ * This is a best-effort estimate from balance snapshots, not a transaction
+ * ledger: unrelated same-direction transfers between readings cannot always
+ * be disambiguated.
+ */
+export function budgetBalanceChange(before: Snapshot, current: Snapshot): number {
+  const cashChange = liquid(current) - liquid(before);
+  const receivableChange = sumPeople(current.people) - sumPeople(before.people);
+  const payableChange = sumPeople(current.liabilities) - sumPeople(before.liabilities);
+  // Lending/receiving back a receivable moves cash opposite the asset.
+  // Taking on/repaying a payable moves cash with the liability.
+  const debtCashMovement = payableChange - receivableChange;
+  const matchedTransfer = cashChange * debtCashMovement > 0
+    ? Math.sign(cashChange) * Math.min(Math.abs(cashChange), Math.abs(debtCashMovement))
+    : 0;
+  return Math.round((cashChange - matchedTransfer) * 100) / 100;
+}
+
 /** Which balance sources changed between two recorded snapshots (gold-price changes are excluded). */
 export function snapshotChanges(before: Snapshot, current: Snapshot): {label:string,delta:number}[] {
   const changes = [
@@ -45,19 +70,24 @@ export const number = (n: number, digits = 2) => new Intl.NumberFormat('ar-EG-u-
 export const dateLabel = (v: string) => new Intl.DateTimeFormat('ar-EG-u-nu-latn', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(v));
 export const monthLabel = (v: string) => new Intl.DateTimeFormat('ar-EG-u-nu-latn', { month: 'long', year: 'numeric' }).format(new Date(`${v}-01T12:00:00`));
 export const monthStatistics = (list: Snapshot[], key: string) => {
-  const items = sorted(list).filter(x => monthKey(x.date) === key);
+  const all = sorted(list);
+  const items = all.filter(x => monthKey(x.date) === key);
   if (!items.length) return null;
   let spent = 0, received = 0;
-  for (let i = 1; i < items.length; i++) {
-    const diff = withoutGold(items[i]) - withoutGold(items[i-1]);
-    if (diff < 0) spent -= diff; else received += diff;
+  for (let i = 1; i < all.length; i++) {
+    if (monthKey(all[i].date) !== key) continue;
+    const diff = budgetBalanceChange(all[i - 1], all[i]);
+    if (diff < -0.005) spent -= diff;
+    else if (diff > 0.005) received += diff;
   }
-  return { items, spent, received, net: withoutGold(items[items.length - 1]) - withoutGold(items[0]) };
+  spent = Math.round(spent * 100) / 100;
+  received = Math.round(received * 100) / 100;
+  return { items, spent, received, net: Math.round((received - spent) * 100) / 100 };
 };
 
 /** Totals for a selected history period. Compare each reading to the previous
  * recorded reading, including when that previous reading is in another month.
- * Positive changes never cancel recorded spending; gold is excluded.
+ * Exclude gold and debt-principal changes / matching debt cash transfers.
  */
 export function historyStatistics(list: Snapshot[], month: string): {count: number; spent: number} {
   const snapshots = sorted(list);
@@ -67,7 +97,7 @@ export function historyStatistics(list: Snapshot[], month: string): {count: numb
     if (month !== 'all' && monthKey(snapshots[i].date) !== month) continue;
     count++;
     if (i === 0) continue;
-    const delta = withoutGold(snapshots[i]) - withoutGold(snapshots[i - 1]);
+    const delta = budgetBalanceChange(snapshots[i - 1], snapshots[i]);
     if (delta < -0.005) spent -= delta;
   }
   return { count, spent: Math.round(spent * 100) / 100 };

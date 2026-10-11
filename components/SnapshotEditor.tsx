@@ -157,9 +157,9 @@ export default function SnapshotEditor({item,latest,snapshots,settings,onClose,o
           <div className="wizard-gold-total"><span>قيمة الذهب</span><strong dir="ltr">{money(form.gold.grams*form.gold.pricePerGram)}</strong><Coins size={23}/></div>
         </>}
         {step===3&&<><div className="wizard-review-hero"><span>إجمالي القراءة بدون الذهب</span><strong dir="ltr">{money(withoutGold(draft))}</strong>
-          <span className={`wizard-review-delta ${delta<0?'down':delta>0?'up':''}`}>{!prev?<><Minus size={17}/> أول قراءة</>:delta===0?<><Minus size={17}/> لا تغيير عن القراءة السابقة</>:delta>0?<><TrendingUp size={19}/> زيادة {money(delta)}</>:<><TrendingDown size={19}/> صرف {money(Math.abs(delta))}</>}</span>
+          <span className={`wizard-review-delta ${delta<0?'down':delta>0?'up':''}`}>{!prev?<><Minus size={17}/> أول قراءة</>:delta===0?<><Minus size={17}/> لا تغيير عن القراءة السابقة</>:delta>0?<><TrendingUp size={19}/> زيادة {money(delta)}</>:<><TrendingDown size={19}/> نقص في الإجمالي {money(Math.abs(delta))}</>}</span>
           <div className="wizard-review-with-gold"><span>مع الذهب</span><strong dir="ltr">{money(netWorth(draft))}</strong></div></div>
-          <p className="wizard-help">المصروف يُحسب من الأصول بدون الذهب فقط؛ قيمة الذهب تتغيّر مع سعر السوق.</p>
+          <p className="wizard-help">هذه مقارنة لإجمالي الأموال بدون الذهب، بما فيها الديون. أما الميزانية الشهرية فلا تحتسب تغيّرات أصل الديون أو سدادها أو استلامها كمصروفات.</p>
           <div className="wizard-diff-list">{lines.length?lines.map(line=><div key={line.name}><span>{line.name}</span><strong className={line.change<0?'negative':'positive'} dir="ltr">{line.change>0?'+':'−'} {money(Math.abs(line.change))}</strong></div>):<p>لا يوجد أي تغيير في الأرصدة.</p>}</div>
           <label className="wizard-notes"><textarea placeholder="ملاحظة اختيارية… مثال: اشتريت حبر، دفعت 20 يورو" rows={3} maxLength={2000} value={form.note??''} onChange={e=>patch({note:e.target.value})}/></label>
           <p className="wizard-help">الملاحظة اختيارية ولا تدخل في حساب المصروف — الحساب يعتمد على فرق المجاميع فقط.</p>

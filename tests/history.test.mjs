@@ -27,3 +27,12 @@ test('spending totals ignore gold price changes and count only negative net move
   const newer={...base,id:'new',date:'2026-10-07T12:00:00Z',gold:{...base.gold,pricePerGram:200},cash:base.cash+10};
   assert.deepEqual(historyStatistics([newer,base],'2026-10'),{count:2,spent:0});
 });
+
+test('history expense total excludes debt-only adjustments and matched repayments',()=>{
+ const owing={...base,id:'owing',date:'2026-10-07T12:00:00Z',liabilities:[p('Sara',100)]};
+ const paid={...owing,id:'paid',date:'2026-10-08T12:00:00Z',liabilities:[p('Sara',40)],bank:base.bank-60};
+ const purchased={...paid,id:'purchase',date:'2026-10-09T12:00:00Z',bank:base.bank-75};
+ assert.equal(withoutGold(owing),withoutGold(base)-40);
+ assert.deepEqual(historyStatistics([base,owing,paid],'2026-10'),{count:3,spent:0});
+ assert.deepEqual(historyStatistics([base,owing,paid,purchased],'2026-10'),{count:4,spent:15});
+});
