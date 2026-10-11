@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import { CalendarDays, ChevronDown, Pencil, Trash2, TrendingDown, TrendingUp } from 'lucide-react';
-import { dateLabel, goldValue, money, monthKey, monthLabel, snapshotChanges, sorted, withoutGold, type Snapshot } from '@/lib/finance';
+import { currentMonth, dateLabel, goldValue, historyStatistics, money, monthKey, monthLabel, snapshotChanges, sorted, withoutGold, type Snapshot } from '@/lib/finance';
 
 const zeroTolerance = 0.005;
 
@@ -13,11 +13,12 @@ type Props = {
 };
 
 export default function HistoryLog({ snapshots, busy, onEdit, onDelete }: Props) {
-  const [month, setMonth] = useState('all');
+  const [month, setMonth] = useState(currentMonth);
   const chronological = useMemo(() => sorted(snapshots), [snapshots]);
-  const availableMonths = useMemo(() => [...new Set(chronological.map(s => monthKey(s.date)))].sort().reverse(), [chronological]);
+  const availableMonths = useMemo(() => [...new Set([currentMonth(), ...chronological.map(s => monthKey(s.date))])].sort().reverse(), [chronological]);
   const previousById = useMemo(() => new Map(chronological.map((s, index) => [s.id, index > 0 ? chronological[index - 1] : undefined] as const)), [chronological]);
   const displayed = useMemo(() => [...chronological].reverse().filter(s => month === 'all' || monthKey(s.date) === month), [chronological, month]);
+  const summary = useMemo(() => historyStatistics(chronological, month), [chronological, month]);
 
   return <section className="readings-screen" aria-labelledby="readings-title">
     <header className="readings-heading">
@@ -27,9 +28,15 @@ export default function HistoryLog({ snapshots, busy, onEdit, onDelete }: Props)
     </header>
 
     <div className="readings-toolbar">
-      <div className="readings-count">
-        <span>إجمالي القراءات</span>
-        <strong dir="ltr">{chronological.length}</strong>
+      <div className="readings-summary" aria-label="ملخص القراءات والمصروفات للفترة المحددة">
+        <div className="readings-metric readings-metric-count">
+          <span>إجمالي القراءات</span>
+          <strong dir="ltr">{summary.count}</strong>
+        </div>
+        <div className="readings-metric readings-metric-spent">
+          <span>إجمالي المصروفات</span>
+          <strong dir="ltr">{money(summary.spent)}</strong>
+        </div>
       </div>
       <label className="readings-month-label">
         <span>عرض القراءات</span>
@@ -79,6 +86,6 @@ export default function HistoryLog({ snapshots, busy, onEdit, onDelete }: Props)
         </article>;
       })}
     </div> : <div className="readings-empty"><CalendarDays size={30}/><p>لا توجد قراءات مسجّلة في هذه الفترة.</p></div>}
-    <p className="readings-explainer">التغيّر محسوب من مقارنة الأرصدة بين قراءتين، دون إدخال تغيّر أسعار الذهب في حساب الصرف.</p>
+    <p className="readings-explainer">إجمالي المصروفات هو مجموع الانخفاضات الصافية بين القراءات المعروضة وسابقاتها، دون احتساب تغيّر أسعار الذهب أو احتساب الزيادات كمصروفات.</p>
   </section>;
 }

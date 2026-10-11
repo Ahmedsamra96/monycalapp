@@ -55,6 +55,24 @@ export const monthStatistics = (list: Snapshot[], key: string) => {
   return { items, spent, received, net: withoutGold(items[items.length - 1]) - withoutGold(items[0]) };
 };
 
+/** Totals for a selected history period. Compare each reading to the previous
+ * recorded reading, including when that previous reading is in another month.
+ * Positive changes never cancel recorded spending; gold is excluded.
+ */
+export function historyStatistics(list: Snapshot[], month: string): {count: number; spent: number} {
+  const snapshots = sorted(list);
+  let count = 0;
+  let spent = 0;
+  for (let i = 0; i < snapshots.length; i++) {
+    if (month !== 'all' && monthKey(snapshots[i].date) !== month) continue;
+    count++;
+    if (i === 0) continue;
+    const delta = withoutGold(snapshots[i]) - withoutGold(snapshots[i - 1]);
+    if (delta < -0.005) spent -= delta;
+  }
+  return { count, spent: Math.round(spent * 100) / 100 };
+}
+
 // JSON files contain no financial data: generate CSV only in the user's browser.
 export function toCSV(list: Snapshot[]): string {
   const rows: (string | number)[][] = [
