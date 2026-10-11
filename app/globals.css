@@ -12,3 +12,109 @@
 @media(max-width:900px){.sidebar{position:fixed;right:0;top:0;height:100vh;transform:translateX(105%);transition:transform .24s ease;box-shadow:-25px 0 70px #13254b1e;width:285px}.sidebar.mobile-open{transform:translateX(0)}.mobile-only{display:grid!important}.menu-scrim{display:block;position:fixed;inset:0;background:#101e3d78;z-index:14}.main-area{width:100%}.topbar{height:73px}.content{padding:25px 20px 100px}.columns-grid{grid-template-columns:1fr}.mini-stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:600px){body{font-size:13px}.content{padding:21px 14px 85px;gap:17px}.topbar{height:68px;padding:0 17px}.topbar-intro h2{font-size:16px}.top-avatar{width:33px;height:33px}.page-heading{align-items:flex-start;flex-direction:column;gap:14px}.page-heading h1{font-size:23px}.page-heading p{font-size:12px}.page-heading>.button{width:100%}.heading-buttons{width:100%}.heading-buttons .button{flex:1}.hero-card{padding:24px 21px;min-height:205px;border-radius:18px}.hero-number{font-size:clamp(29px,8vw,40px)}.hero-bottom{align-items:flex-start;flex-direction:column}.stats-grid{gap:10px}.stat-card{padding:15px 12px;gap:8px;border-radius:15px}.stat-card strong{font-size:clamp(15px,4vw,19px)}.stat-card>span{font-size:10px}.stat-card small{font-size:9px}.stat-icon{height:35px;width:35px;border-radius:10px}.panel-header{padding:18px 15px 10px}.balance-list{padding:0 14px 15px}.history-rows{padding:4px 12px 12px}.history-row{gap:9px;min-width:0}.history-row>strong{font-size:11px}.history-date-icon{width:32px;height:32px}.mini-stats{gap:9px}.mini-stat{padding:13px}.mini-stat strong{font-size:14px}.debt-grid{grid-template-columns:1fr}.debt-person{padding:15px}.debt-person-head strong{font-size:12px}.period-picker{flex-wrap:wrap;padding:12px}.period-picker select{flex:1;min-width:130px}.period-picker span{margin-right:0}.gold-hero{padding:21px 17px;gap:13px}.gold-round{width:56px;height:56px;border-radius:15px}.gold-hero strong{font-size:26px}.gold-actions .button{width:100%}.export-row{padding:10px 15px 19px;gap:10px}.export-row .button{padding:8px 10px}.sheet-header{padding:14px 16px}.sheet-body{padding:0 16px 20px}.sheet-footer{padding-inline:16px}.steps{padding:14px 16px}.overlay{padding:0}.small-modal{border-radius:18px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;transition-duration:.001ms!important;scroll-behavior:auto!important}}
+
+/* Home dashboard: reference-inspired information hierarchy, preserving existing blue design tokens. */
+.reference-dashboard{display:grid;gap:24px;max-width:920px;margin:0 auto;width:100%;padding-bottom:18px}
+.overview-welcome{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:5px 2px 0}
+.overview-welcome h1{font-size:clamp(24px,3vw,31px);font-weight:800;letter-spacing:-.6px;line-height:1.5}
+.overview-welcome p{color:var(--slate);font-size:13px;margin-top:1px}
+.overview-wallet{display:grid;place-items:center;width:51px;height:51px;border-radius:50%;background:var(--surface);border:1px solid var(--line);color:var(--blue);box-shadow:var(--shadow)}
+.overview-wallet:hover{background:#eef3ff}
+.overview-hero{display:flex;flex-direction:column;align-items:flex-start;position:relative;overflow:hidden;border-radius:30px;padding:33px 34px 32px;background:linear-gradient(135deg,#1b367d 0%,#345bd1 62%,#547dec 100%);box-shadow:0 14px 38px #345dc523;color:#fff}
+.overview-hero:before{content:'';position:absolute;width:380px;height:380px;border:1px solid #fff2;background:#fff06;border-radius:50%;left:-180px;top:-220px;pointer-events:none}
+.overview-hero-label{align-self:flex-start;font-size:16px;color:#e0e8ff;font-weight:600;z-index:1}
+.overview-hero-amount{align-self:flex-start;font:800 clamp(40px,6vw,63px)/1.35 Inter,'IBM Plex Sans Arabic',sans-serif;letter-spacing:-1.3px;white-space:nowrap;z-index:1;margin-top:12px;unicode-bidi:plaintext}
+.overview-change{z-index:1;display:inline-flex;align-items:center;gap:6px;border-radius:999px;font-size:13px;font-weight:750;padding:10px 15px;margin-top:15px}
+.overview-change.positive{color:#12664e!important;background:#dff9ee}
+.overview-change.negative{color:#a43646!important;background:#fff0ef}
+.overview-hero-full{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;background:#ffffff23;padding:17px 20px;border-radius:999px;margin-top:27px;position:relative;font-size:16px;font-weight:700}
+.overview-hero-full strong{font:800 clamp(21px,3vw,29px)/1.4 Inter,'IBM Plex Sans Arabic',sans-serif;white-space:nowrap;unicode-bidi:plaintext}
+.overview-hero-date{align-self:flex-start;color:#d9e5ff;font-size:12px;margin-top:17px}
+.overview-new{z-index:1;margin-top:26px;width:100%;border:0;border-radius:999px;background:#fff;color:#294da7;min-height:66px;display:flex;align-items:center;justify-content:center;gap:13px;font-weight:800;font-size:19px;transition:transform .18s,background .18s}
+.overview-new:hover{background:#f1f5ff;transform:translateY(-1px)}
+.overview-section{display:grid;gap:14px}
+.overview-section h2,.overview-month-card h2{font-size:20px;font-weight:800;letter-spacing:-.35px}
+.overview-section-heading{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.overview-link{display:flex;align-items:center;gap:3px;background:transparent;border:0;color:var(--blue);font-size:13px;font-weight:750}
+.overview-accounts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.overview-account{display:flex;flex-direction:column;align-items:flex-start;background:var(--surface);border:1px solid var(--line);border-radius:23px;min-height:148px;padding:20px 23px;box-shadow:var(--shadow);min-width:0}
+.overview-account svg{color:var(--blue);margin-bottom:13px}
+.overview-account span{color:var(--slate);font-size:13px;font-weight:650}
+.overview-account strong{color:var(--ink);font:800 clamp(18px,2.8vw,26px)/1.5 Inter,'IBM Plex Sans Arabic',sans-serif;unicode-bidi:plaintext;white-space:nowrap;max-width:100%}
+.overview-account .amount-negative{color:#d44957}
+.overview-gold-card{display:flex;align-items:center;text-align:right;gap:18px;border-radius:23px;background:linear-gradient(110deg,#fff6e7,#fff0cb);border:1px solid #f4e5c3;padding:21px 24px;min-height:115px;width:100%;color:#604a22;box-shadow:var(--shadow)}
+.overview-gold-card:hover{filter:brightness(.986)}
+.overview-gold-icon{display:grid;place-items:center;border-radius:50%;height:64px;width:64px;background:#f4ddb0;flex-shrink:0;color:#88631b}
+.overview-gold-description{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
+.overview-gold-description>span{font-size:13px;color:#97723b;font-weight:650}
+.overview-gold-description>strong{font:800 clamp(22px,3vw,30px) Inter,'IBM Plex Sans Arabic',sans-serif;white-space:nowrap;unicode-bidi:plaintext}
+.overview-gold-price{font-weight:750;color:#97723b;font-size:13px;white-space:nowrap;unicode-bidi:plaintext}
+.overview-help{color:var(--slate);font-size:12px;padding-inline:2px;line-height:1.85}
+.overview-month-card,.overview-budget-card{background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);border-radius:25px;padding:28px 30px;display:flex;flex-direction:column;align-items:flex-start;gap:10px}
+.overview-month-card h2{color:var(--slate);font-size:17px}
+.overview-spent{align-self:flex-start;font:800 clamp(38px,4.5vw,52px) Inter,'IBM Plex Sans Arabic',sans-serif;color:#d44a56;unicode-bidi:plaintext}
+.overview-month-card p{color:var(--slate);font-size:13px}
+.overview-gained{color:#15996f;font-weight:750;font-size:14px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.overview-budget-head{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;color:var(--slate);font-weight:700}
+.overview-budget-head span:last-child{font-family:Inter,'IBM Plex Sans Arabic',sans-serif;font-size:12px}
+.overview-budget-card>strong{font:800 clamp(33px,4vw,47px) Inter,'IBM Plex Sans Arabic',sans-serif;unicode-bidi:plaintext}
+.overview-budget-negative{color:#d34c5e}
+.overview-budget-positive{color:#178c6a}
+.overview-progress{background:#e6ebf4;height:11px;border-radius:20px;overflow:hidden;width:100%;margin-top:17px}
+.overview-progress span{background:var(--blue);display:block;height:100%;border-radius:20px;transition:width .2s}
+.overview-recent-list{background:var(--surface);border:1px solid var(--line);border-radius:25px;overflow:hidden;box-shadow:var(--shadow)}
+.overview-reading{border:0;border-bottom:1px solid var(--line);background:transparent;display:flex;align-items:center;justify-content:space-between;gap:15px;text-align:right;padding:18px 23px;width:100%;min-height:78px}
+.overview-reading:last-child{border-bottom:0}
+.overview-reading:hover{background:#f8faff}
+.overview-reading-info{min-width:0;flex:1;display:flex;flex-direction:column;gap:3px}
+.overview-reading-info>strong{font-size:14px;font-weight:750}
+.overview-reading-info small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--slate);font-size:11px;max-width:45ch}
+.overview-reading-totals{display:flex;flex-direction:column;gap:2px;text-align:left;align-items:flex-start;flex-shrink:0}
+.overview-reading-totals strong{font:750 16px Inter,'IBM Plex Sans Arabic',sans-serif;white-space:nowrap;unicode-bidi:plaintext}
+.overview-reading-totals small{font-size:12px;font-weight:750;white-space:nowrap}
+.overview-reading-totals .down{color:#cf4a5b}
+.overview-reading-totals .up{color:#14986c}
+.overview-empty{padding:25px;border-radius:22px;background:var(--surface);color:var(--slate)}
+.overview-data-note{color:var(--slate);display:flex;align-items:center;gap:7px;font-size:11px;padding-inline:5px}
+.mobile-bottom-nav{display:none}
+@media(max-width:900px){
+  .mobile-bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;z-index:35;align-items:center;justify-content:space-around;direction:rtl;background:#fffefc;border-top:1px solid var(--line);padding:7px 8px max(12px,env(safe-area-inset-bottom));box-shadow:0 -6px 25px #17233d0a}
+  .mobile-bottom-nav button{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;background:transparent;border:0;color:var(--slate);min-width:56px;font-size:11px;font-weight:750;min-height:54px}
+  .mobile-bottom-nav button.current{color:var(--blue)}
+  .mobile-bottom-nav button.mobile-add{min-width:76px;position:relative;top:-17px;height:76px;width:76px;min-height:76px;border-radius:50%;background:var(--blue);color:#fff;box-shadow:0 6px 18px #365ed840;border:7px solid var(--background)}
+  .mobile-bottom-nav button.mobile-add:hover{background:#234bbb}
+  .topbar{display:none}
+  .content{padding-bottom:calc(105px + env(safe-area-inset-bottom))}
+}
+@media(max-width:600px){
+  .reference-dashboard{gap:21px}
+  .overview-welcome{padding:2px 2px 0}
+  .overview-welcome h1{font-size:23px}
+  .overview-welcome p{font-size:12px}
+  .overview-wallet{width:45px;height:45px}
+  .overview-hero{padding:26px 22px 25px;border-radius:26px}
+  .overview-hero-label{font-size:14px}
+  .overview-hero-amount{font-size:clamp(37px,9vw,52px);margin-top:13px}
+  .overview-change{font-size:12px;padding:8px 12px}
+  .overview-hero-full{margin-top:24px;padding:14px 17px;font-size:14px}
+  .overview-hero-full strong{font-size:20px}
+  .overview-new{min-height:58px;font-size:17px;margin-top:23px}
+  .overview-section h2{font-size:18px}
+  .overview-accounts{gap:10px}
+  .overview-account{min-height:133px;border-radius:20px;padding:17px 16px}
+  .overview-account svg{margin-bottom:11px}
+  .overview-account strong{font-size:clamp(17px,5vw,22px)}
+  .overview-gold-card{gap:11px;padding:18px 16px;border-radius:21px}
+  .overview-gold-icon{height:51px;width:51px}
+  .overview-gold-description>strong{font-size:21px}
+  .overview-gold-price{font-size:11px}
+  .overview-month-card,.overview-budget-card{padding:23px 20px;border-radius:23px}
+  .overview-spent{font-size:42px}
+  .overview-month-card h2{font-size:16px}
+  .overview-reading{padding:16px 14px;gap:10px}
+  .overview-reading-info>strong{font-size:12px}
+  .overview-reading-totals strong{font-size:14px}
+  .mobile-bottom-nav button{font-size:10px;min-width:49px}
+  .mobile-bottom-nav button.mobile-add{height:69px;min-height:69px;width:69px;min-width:69px}
+}
+@media(max-width:375px){.overview-gold-price{display:none}.overview-reading-info small{max-width:17ch}.overview-reading-totals strong{font-size:13px}.overview-account strong{font-size:16px}}
