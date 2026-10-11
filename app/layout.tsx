@@ -3,6 +3,7 @@ import PWAClient from '@/components/PWAClient';
 import './globals.css';
 import './mobile-pwa.css';
 import './history.css';
+import './theme.css';
 
 export const metadata: Metadata = {
   applicationName:'MonyCal', title:'مالي — MonyCal',
@@ -18,5 +19,8 @@ export const viewport: Viewport = {
   viewportFit:'cover',themeColor:'#f5f7fb'
 };
 export default function Layout({children}:{children:React.ReactNode}) {
-  return <html lang="ar" dir="rtl"><body><PWAClient/>{children}</body></html>;
+  return <html lang="ar" dir="rtl" suppressHydrationWarning>
+    <head><script dangerouslySetInnerHTML={{__html:"(function(){try{var t=localStorage.getItem('monycal-theme');document.documentElement.dataset.theme=t==='dark'?'dark':'light';if(t==='dark'){var m=document.querySelector('meta[name=\\\"theme-color\\\"]');if(m)m.setAttribute('content','#0c1526');}}catch(e){document.documentElement.dataset.theme='light';}})();"}}/></head>
+    <body><PWAClient/>{children}</body>
+  </html>;
 }

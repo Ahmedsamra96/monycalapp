@@ -1,0 +1,211 @@
+/* Opt-in dark mode. Light design is unchanged and remains the default.
+   Theme applies to the whole document, including dialogs and the mobile PWA. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --background:#0c1526;
+  --surface:#172337;
+  --surface2:#202f48;
+  --ink:#edf3ff;
+  --slate:#aab9cf;
+  --muted:#8b9bb4;
+  --blue:#7ca4ff;
+  --blue2:#9cb9ff;
+  --line:#2c3d56;
+  --shadow:0 9px 35px rgba(1,8,20,.24),0 1px 4px rgba(1,8,20,.18);
+  --wiz-dark:#4979e7;
+}
+html[data-theme="dark"] body{background:var(--background);color:var(--ink)}
+html[data-theme="dark"] input,
+html[data-theme="dark"] textarea,
+html[data-theme="dark"] select{background:var(--surface2);color:var(--ink);border-color:var(--line)}
+html[data-theme="dark"] input::placeholder,
+html[data-theme="dark"] textarea::placeholder{color:#8496b1}
+html[data-theme="dark"] input:focus-visible,
+html[data-theme="dark"] textarea:focus-visible,
+html[data-theme="dark"] select:focus-visible,
+html[data-theme="dark"] button:focus-visible{outline-color:#a3bfff}
+html[data-theme="dark"] ::-webkit-scrollbar-thumb{background:#475978}
+
+/* Main chrome, navigation, and shared content blocks */
+html[data-theme="dark"] .sidebar,
+html[data-theme="dark"] .topbar,
+html[data-theme="dark"] .sheet,
+html[data-theme="dark"] .sheet-footer,
+html[data-theme="dark"] .small-modal,
+html[data-theme="dark"] .stat-card,
+html[data-theme="dark"] .mini-stat,
+html[data-theme="dark"] .period-picker,
+html[data-theme="dark"] .error-state,
+html[data-theme="dark"] .reading-card,
+html[data-theme="dark"] .readings-empty,
+html[data-theme="dark"] .mobile-bottom-nav {
+  background:var(--surface);
+  color:var(--ink);
+  border-color:var(--line);
+}
+html[data-theme="dark"] .sidebar-brand b,
+html[data-theme="dark"] .reading-card-date h2,
+html[data-theme="dark"] .reading-card-money>strong{color:var(--ink)}
+html[data-theme="dark"] .sidebar-brand small,
+html[data-theme="dark"] .nav-label,
+html[data-theme="dark"] .topbar-intro p,
+html[data-theme="dark"] .panel-header p,
+html[data-theme="dark"] .history-name small,
+html[data-theme="dark"] .debt-person-head small,
+html[data-theme="dark"] .export-row small,
+html[data-theme="dark"] .modal-header p,
+html[data-theme="dark"] .stat-card small,
+html[data-theme="dark"] .stat-card>span,
+html[data-theme="dark"] .reading-card-money>span,
+html[data-theme="dark"] .reading-card-money>span b,
+html[data-theme="dark"] .error-state p{color:var(--slate)}
+html[data-theme="dark"] .icon-control,
+html[data-theme="dark"] .icon-button,
+html[data-theme="dark"] .reading-actions button{background:#253651;color:#c0d2eb}
+html[data-theme="dark"] .icon-control:hover,
+html[data-theme="dark"] .icon-button:hover,
+html[data-theme="dark"] .reading-actions button:hover{background:#314b70;color:#b8ccff}
+html[data-theme="dark"] .nav-item{color:#b6c5db}
+html[data-theme="dark"] .nav-item:hover,
+html[data-theme="dark"] .nav-item.active{background:#263f68;color:#b2ccff}
+html[data-theme="dark"] .top-avatar,
+html[data-theme="dark"] .tag,
+html[data-theme="dark"] .balance-list .balance-final,
+html[data-theme="dark"] .history-date-icon,
+html[data-theme="dark"] .avatar-small,
+html[data-theme="dark"] .stat-icon.blue,
+html[data-theme="dark"] .export-icon,
+html[data-theme="dark"] .install-app-icon{background:#293f61;color:#b8cdff;border-color:var(--line)}
+html[data-theme="dark"] .button-muted,
+html[data-theme="dark"] .button.secondary,
+html[data-theme="dark"] .period-picker span,
+html[data-theme="dark"] .steps button,
+html[data-theme="dark"] .debt-pills>span{background:#263953;color:#c7d6ec}
+html[data-theme="dark"] .button-muted:hover,
+html[data-theme="dark"] .button.secondary:hover{background:#335071}
+html[data-theme="dark"] .segment{background:#101d31}
+html[data-theme="dark"] .segment button{color:var(--slate)}
+html[data-theme="dark"] .segment button.active{background:#2a4263;color:#c2d4ff}
+html[data-theme="dark"] .info-banner,
+html[data-theme="dark"] .loading-inline{background:#1d3553;border-color:#325070;color:#bfd5ff}
+html[data-theme="dark"] .balance-list>div,
+html[data-theme="dark"] .history-row{border-color:var(--line)}
+html[data-theme="dark"] .balance-list span,
+html[data-theme="dark"] .field{color:var(--slate)}
+html[data-theme="dark"] .field>input,
+html[data-theme="dark"] .field>select,
+html[data-theme="dark"] .field>textarea,
+html[data-theme="dark"] .field>.number-input,
+html[data-theme="dark"] .field>.input-icon{background:var(--surface2);border-color:var(--line);color:var(--ink)}
+html[data-theme="dark"] .sheet-footer,
+html[data-theme="dark"] .sheet-header,
+html[data-theme="dark"] .modal-header,
+html[data-theme="dark"] .summary-list,
+html[data-theme="dark"] .person-edit,
+html[data-theme="dark"] .person-editor{border-color:var(--line)}
+html[data-theme="dark"] .person-edit,
+html[data-theme="dark"] .person-editor{background:var(--surface2)}
+html[data-theme="dark"] .error-state{color:var(--slate)}
+html[data-theme="dark"] .reading-source-chip.out,
+html[data-theme="dark"] .readings-metric-spent strong,
+html[data-theme="dark"] .delta.minus{color:#ff98a4;background:#492936}
+html[data-theme="dark"] .reading-source-chip.in,
+html[data-theme="dark"] .delta.plus{color:#74dfb5;background:#1b423e}
+html[data-theme="dark"] .flash-error,
+html[data-theme="dark"] .form-error,
+html[data-theme="dark"] .alert-error{background:#482a38;color:#ffadb7}
+html[data-theme="dark"] .flash-success{background:#1b443b;color:#92edc2}
+html[data-theme="dark"] .connected{color:#92dfbf}
+html[data-theme="dark"] .status-dot{box-shadow:0 0 0 4px #234539}
+html[data-theme="dark"] .stat-icon.gold,
+html[data-theme="dark"] .history-date-icon.gold{background:#43391f;color:#f1cf78}
+html[data-theme="dark"] .stat-icon.green{background:#1a4339;color:#8ee3b1}
+html[data-theme="dark"] .stat-icon.red{background:#4b2d3b;color:#ffa3b3}
+
+/* Home, summary, gold cards and monthly figures. Keep vivid primary blue. */
+html[data-theme="dark"] .overview-hero{background:linear-gradient(135deg,#152955,#22479c 60%,#3769c9);box-shadow:0 15px 36px #02091666}
+html[data-theme="dark"] .overview-hero .overview-new{background:#edf3ff;color:#244899}
+html[data-theme="dark"] .overview-hero .overview-new:hover{background:#dce9ff}
+html[data-theme="dark"] .overview-wallet{background:#253650;border-color:#354967;color:#adc7ff}
+html[data-theme="dark"] .overview-wallet:hover{background:#304869}
+html[data-theme="dark"] .overview-gold-card,
+html[data-theme="dark"] .gold-hero{background:linear-gradient(115deg,#383019,#514023);color:#ffe5ab;border-color:#65522a}
+html[data-theme="dark"] .overview-gold-description>span,
+html[data-theme="dark"] .overview-gold-price,
+html[data-theme="dark"] .gold-hero span,
+html[data-theme="dark"] .gold-hero p{color:#e4c88b}
+html[data-theme="dark"] .gold-hero strong{color:#ffe5aa}
+html[data-theme="dark"] .overview-gold-icon,
+html[data-theme="dark"] .gold-round{background:#645029;color:#ffe1a1}
+html[data-theme="dark"] .overview-account strong{color:var(--ink)}
+html[data-theme="dark"] .overview-account strong.amount-negative{color:#ff8d9f}
+html[data-theme="dark"] .overview-reading:hover{background:#22344c}
+html[data-theme="dark"] .overview-progress{background:#31445f}
+html[data-theme="dark"] .overview-spent,
+html[data-theme="dark"] .overview-budget-negative{color:#ff8399}
+html[data-theme="dark"] .overview-gained,
+html[data-theme="dark"] .overview-budget-positive{color:#7adeae}
+html[data-theme="dark"] .overview-recent-list,
+html[data-theme="dark"] .overview-account,
+html[data-theme="dark"] .overview-month-card,
+html[data-theme="dark"] .overview-budget-card{background:var(--surface);border-color:var(--line)}
+
+/* Readings history, monthly filter, and colored source changes */
+html[data-theme="dark"] .readings-select-wrap select{background:var(--surface2);border-color:var(--line);color:var(--ink)}
+html[data-theme="dark"] .reading-card{background:var(--surface)}
+html[data-theme="dark"] .reading-card-footer{border-color:var(--line)}
+html[data-theme="dark"] .readings-metric-count strong,
+html[data-theme="dark"] .readings-count strong{background:#273f63;color:#b8ceff}
+html[data-theme="dark"] .reading-actions button.delete:hover{background:#532f40;color:#ffa9b6}
+
+/* Four-step editor: all fields, review panel, and buttons. */
+html[data-theme="dark"] .wizard-overlay{background:#070d1acc}
+html[data-theme="dark"] .wizard-sheet,
+html[data-theme="dark"] .wizard-header,
+html[data-theme="dark"] .wizard-footer{background:var(--background);color:var(--ink)}
+html[data-theme="dark"] .wizard-money-field,
+html[data-theme="dark"] .wizard-person,
+html[data-theme="dark"] .wizard-diff-list,
+html[data-theme="dark"] .wizard-empty-debts,
+html[data-theme="dark"] .wizard-date-details{background:var(--surface);border-color:var(--line);box-shadow:none}
+html[data-theme="dark"] .wizard-person-top input,
+html[data-theme="dark"] .wizard-person-entry>input,
+html[data-theme="dark"] .wizard-date-details input{background:var(--surface2);border-color:var(--line);color:var(--ink)}
+html[data-theme="dark"] .wizard-debt-switch,
+html[data-theme="dark"] .wizard-karats button,
+html[data-theme="dark"] .wizard-progress button:not(.active){background:#253750;color:#b6c5db}
+html[data-theme="dark"] .wizard-debt-switch button.selected{background:#375681;color:#f0f5ff}
+html[data-theme="dark"] .wizard-person-avatar,
+html[data-theme="dark"] .wizard-add-person,
+html[data-theme="dark"] .wizard-gold-refresh,
+html[data-theme="dark"] .wizard-close,
+html[data-theme="dark"] .wizard-back{background:#293e60;color:#d3e2ff}
+html[data-theme="dark"] .wizard-icon-remove{background:#2d3d53;color:#bfccdf}
+html[data-theme="dark"] .wizard-icon-danger{background:#4c303d;color:#ff9eaf}
+html[data-theme="dark"] .wizard-running-total{color:#b7cfff}
+html[data-theme="dark"] .wizard-next{background:#4774df;color:#fff}
+html[data-theme="dark"] .wizard-gold-total{background:#48391e;color:#ffe1a0}
+html[data-theme="dark"] .wizard-review-hero{background:linear-gradient(120deg,#142b61,#2d59b1)}
+html[data-theme="dark"] .wizard-review-delta{background:#304362;color:#e0eaff}
+html[data-theme="dark"] .wizard-review-delta.up{background:#17453e;color:#93edbf}
+html[data-theme="dark"] .wizard-review-delta.down{background:#502d3c;color:#ffafbc}
+html[data-theme="dark"] .wizard-notes textarea{background:var(--surface);border-color:var(--line);color:var(--ink)}
+html[data-theme="dark"] .wizard-error{background:#502e3b;color:#ffc0c8}
+html[data-theme="dark"] .wizard-date-details{color:var(--slate)}
+
+/* Theme switcher: quick buttons and labeled control in Settings. */
+.overview-welcome-actions{display:flex;align-items:center;gap:9px}
+.theme-settings-card{padding:20px 22px;display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.theme-settings-card h2{font-size:15px;font-weight:800;color:var(--ink)}
+.theme-settings-card p{color:var(--slate);font-size:12px;margin-top:5px;line-height:1.75}
+.theme-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px;border:1px solid var(--line);background:var(--surface2);border-radius:15px;min-width:220px}
+.theme-options button{display:flex;justify-content:center;align-items:center;gap:7px;min-height:42px;padding:7px 15px;border:0;border-radius:11px;color:var(--slate);background:transparent;font-size:13px;font-weight:750;transition:background .2s,color .2s}
+.theme-options button.selected{background:var(--surface);box-shadow:var(--shadow);color:var(--blue)}
+html[data-theme="dark"] .theme-options button.selected{background:#304a70;color:#d4e2ff}
+html[data-theme="dark"] .theme-topbar-toggle{color:#c7d8ff}
+@media(max-width:560px){
+  .theme-settings-card{padding:17px;align-items:stretch;flex-direction:column}
+  .theme-options{width:100%;min-width:0}
+  .overview-welcome-actions{gap:7px}
+  .overview-welcome-actions .overview-wallet{width:42px;height:42px}
+}

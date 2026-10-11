@@ -1,6 +1,6 @@
 'use client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ArrowDownLeft, ArrowUpRight, BarChart3, CalendarClock, Check, ChevronLeft, Coins, Download, HandCoins, Home, Landmark, Menu, Pencil, Plus, RefreshCw, Settings2, ShieldCheck, Trash2, Users, Wallet, X } from 'lucide-react';
+import { ArrowDownLeft, ArrowUpRight, BarChart3, CalendarClock, Check, ChevronLeft, Coins, Download, HandCoins, Home, Landmark, Menu, Moon, Pencil, Plus, RefreshCw, Settings2, ShieldCheck, Sun, Trash2, Users, Wallet, X } from 'lucide-react';
 import { currentMonth, dateLabel, goldValue, liquid, money, monthKey, monthLabel, monthStatistics, netWorth, number, sorted, sumPeople, toCSV, withoutGold, type AppData, type Person, type Settings, type Snapshot } from '@/lib/finance';
 import SnapshotEditor from './SnapshotEditor';
 import HomeOverview from './HomeOverview';
@@ -10,6 +10,8 @@ import InstallApp from './InstallApp';
 type Tab='home'|'history'|'debts'|'gold'|'settings';
 type DebtType='people'|'liabilities';
 type DebtAction={type:'new'|'add'|'settle',key:DebtType,person?:Person};
+type Theme = 'light' | 'dark';
+const themeStorageKey = 'monycal-theme';
 const id=()=>crypto.randomUUID();
 const initialSettings:Settings={monthlyBudget:null,defaultKarat:24,defaultGrams:0,onboarded:false};
 async function request<T>(path:string, method='GET', data?:unknown):Promise<T> {
@@ -39,6 +41,28 @@ export default function FinanceApp() {
   const [debtAccount,setDebtAccount]=useState<'bank'|'cash'|'redotpay'>('cash');
   const [goldBusy,setGoldBusy]=useState(false);
   const [settingsDraft,setSettingsDraft]=useState<Settings>(initialSettings);
+  const [theme,setTheme]=useState<Theme>('light');
+
+  useEffect(()=>{
+    const readTheme=()=>document.documentElement.dataset.theme==='dark'?'dark':'light';
+    setTheme(readTheme());
+    const syncTheme=(event:StorageEvent)=>{
+      if(event.key!==themeStorageKey)return;
+      const next:Theme=event.newValue==='dark'?'dark':'light';
+      document.documentElement.dataset.theme=next;
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content',next==='dark'?'#0c1526':'#f5f7fb');
+      setTheme(next);
+    };
+    window.addEventListener('storage',syncTheme);
+    return()=>window.removeEventListener('storage',syncTheme);
+  },[]);
+  const selectTheme=(next:Theme)=>{
+    document.documentElement.dataset.theme=next;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content',next==='dark'?'#0c1526':'#f5f7fb');
+    try{localStorage.setItem(themeStorageKey,next);}catch{/* Storage can be unavailable in private contexts. */}
+    setTheme(next);
+  };
+  const toggleTheme=()=>selectTheme(theme==='light'?'dark':'light');
 
   const refresh=useCallback(async()=>{
     setLoading(true);setError('');
@@ -120,21 +144,21 @@ export default function FinanceApp() {
     </aside>
     {menuOpen&&<div className="menu-scrim" onClick={()=>setMenuOpen(false)}/>}
     <div className="main-area">
-      <header className="topbar"><div className="topbar-intro"><button className="icon-control mobile-only" aria-label="فتح القائمة" onClick={()=>setMenuOpen(true)}><Menu size={21}/></button><div><p>لوحة التحكم المالية</p><h2>{menuItems.find(i=>i.key===tab)?.name}</h2></div></div><div className="topbar-actions"><button className="icon-control" title="تحديث من السحابة" aria-label="تحديث البيانات" disabled={loading||busy} onClick={()=>void refresh()}><RefreshCw size={19} className={loading?'spin':''}/></button><span className="top-avatar">M</span></div></header>
+      <header className="topbar"><div className="topbar-intro"><button className="icon-control mobile-only" aria-label="فتح القائمة" onClick={()=>setMenuOpen(true)}><Menu size={21}/></button><div><p>لوحة التحكم المالية</p><h2>{menuItems.find(i=>i.key===tab)?.name}</h2></div></div><div className="topbar-actions"><button type="button" className="icon-control theme-topbar-toggle" onClick={toggleTheme} title={theme==='dark'?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن'} aria-label={theme==='dark'?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن'} aria-pressed={theme==='dark'}>{theme==='dark'?<Sun size={19}/>:<Moon size={19}/>}</button><button className="icon-control" title="تحديث من السحابة" aria-label="تحديث البيانات" disabled={loading||busy} onClick={()=>void refresh()}><RefreshCw size={19} className={loading?'spin':''}/></button><span className="top-avatar">M</span></div></header>
       <main className="content">
         {error&&<div className="flash flash-error" role="alert">{error}<button aria-label="إغلاق" onClick={()=>setError('')}><X size={16}/></button></div>}
         {notice&&<div className="flash flash-success" role="status">{notice}<button aria-label="إغلاق" onClick={()=>setNotice('')}><X size={16}/></button></div>}
         {loading&&<div className="loading-inline"><div className="spinner"/>جاري مزامنة البيانات...</div>}
         {!data&&!loading?<div className="error-state"><RefreshCw size={32}/><h2>تعذّر تحميل البيانات</h2><p>لن تُعرض بيانات تجريبية أو قديمة. راجع إعدادات Supabase ثم حاول مجددًا.</p><button className="button button-primary" onClick={()=>void refresh()}>إعادة المحاولة</button></div>:null}
         {data&&<>
-          {tab==='home'&&<HomeOverview snapshots={snaps} latest={latest} previous={previous} month={thisMonth} settings={data.settings} onNew={()=>setEditing(null)} onHistory={()=>navigate('history')} onGold={()=>navigate('gold')} onEdit={setEditing}/>}
+          {tab==='home'&&<HomeOverview snapshots={snaps} latest={latest} previous={previous} month={thisMonth} settings={data.settings} theme={theme} onThemeToggle={toggleTheme} onNew={()=>setEditing(null)} onHistory={()=>navigate('history')} onGold={()=>navigate('gold')} onEdit={setEditing}/>}
           {tab==='history'&&<HistoryLog snapshots={snaps} busy={busy} onEdit={setEditing} onDelete={s=>void removeSnapshot(s)}/>}
           {tab==='debts'&&<><div className="page-heading"><div><span className="eyebrow">تنظيم الالتزامات</span><h1>ديونك ومستحقاتك</h1><p>استلام دين أو سداده يحوّل الرصيد دون اعتباره مصروفًا أو دخلًا جديدًا.</p></div></div>
             <div className="segment"><button className={mode==='people'?'active':''} onClick={()=>setMode('people')}>ديون لي <span>{money(latest?sumPeople(latest.people):0)}</span></button><button className={mode==='liabilities'?'active':''} onClick={()=>setMode('liabilities')}>ديون عليّ <span>{money(latest?sumPeople(latest.liabilities):0)}</span></button></div>
             {!latest?<Empty text="أضف قراءة مالية لبدء إدارة الديون."/>:<><div className="info-banner">{mode==='people'?'عند استلام مبلغ، ينقص الدين ويزيد رصيد الحساب المختار بنفس القيمة.':'عند سداد مبلغ، ينقص الدين وينقص رصيد الحساب المختار بنفس القيمة.'}</div><div className="debts-summary"><div><small>{mode==='people'?'مستحق لك':'مستحق عليك'}</small><strong>{money(sumPeople(latest[mode]))}</strong></div><button className="button button-primary" onClick={()=>openDebt({type:'new',key:mode})}><Plus size={17}/> إضافة شخص</button></div><div className="debt-grid">{latest[mode].map(p=><div className="panel debt-person" key={p.id}><div className="debt-person-head"><span className="avatar-small">{p.name.charAt(0)}</span><div><h3>{p.name}</h3><small>{p.entries.length} مبالغ</small></div><strong>{money(sumPeople([p]))}</strong></div><div className="debt-pills">{p.entries.map(e=><span key={e.id}>{money(e.amount)}</span>)}</div><div className="debt-actions"><button className="button button-muted" onClick={()=>openDebt({type:'add',key:mode,person:p})}><Plus size={16}/> مبلغ إضافي</button><button className="button button-primary" disabled={sumPeople([p])<=0} onClick={()=>openDebt({type:'settle',key:mode,person:p})}>{mode==='people'?'استلام مبلغ':'سداد مبلغ'}</button></div></div>)}{!latest[mode].length&&<Empty text="لا توجد ديون في هذا القسم."/>}</div></>}
           </>}
           {tab==='gold'&&<><div className="page-heading"><div><span className="eyebrow">مدخرات الذهب</span><h1>رصيد الذهب</h1><p>تابع الكمية والعيار والقيمة، ويمكنك تحديث السعر المباشر عند رغبتك.</p></div></div>{latest?<><div className="gold-hero"><div className="gold-round"><Coins size={32}/></div><div><span>قيمة الذهب المقدرة</span><strong>{money(goldValue(latest))}</strong><p>{number(latest.gold.grams,3)} جرام • عيار {latest.gold.karat} • {money(latest.gold.pricePerGram)} / جرام</p></div></div><div className="gold-actions"><button className="button button-primary" disabled={goldBusy} onClick={()=>void refreshGold()}><RefreshCw size={18}/> {goldBusy?'جاري التحديث...':'جلب السعر المباشر وحفظه'}</button><button className="button button-muted" onClick={()=>setEditing(latest)}><Pencil size={17}/> تعديل السعر أو الجرامات يدويًا</button></div><section className="panel"><div className="panel-header"><div><h2>سجل أسعار الذهب</h2><p>الأسعار المحفوظة سابقًا في قاعدة البيانات</p></div><span className="tag">{data.goldPrices.length} أسعار</span></div><div className="history-rows">{[...data.goldPrices].reverse().map(p=><div key={p.id} className="history-row"><span className="history-date-icon gold"><Coins size={18}/></span><div className="history-name"><b>{dateLabel(p.date)}</b><small>سعر الجرام</small></div><strong>{money(p.pricePerGram)}</strong></div>)}</div></section></>:<Empty text="أضف قراءة مالية لتسجيل مدخرات الذهب."/>}</>}
-          {tab==='settings'&&<><InstallApp/><div className="page-heading"><div><span className="eyebrow">التحكم</span><h1>الإعدادات</h1><p>اضبط ميزانيتك وقيم الذهب الافتراضية، وحافظ على نسخة من تاريخك المالي.</p></div></div><section className="panel settings-panel"><div className="panel-header"><div><h2>الميزانية والتفضيلات</h2><p>الإعدادات تطبّق على القراءات المستقبلية فقط</p></div></div><form onSubmit={e=>void saveSettings(e)} className="settings-form"><label className="field"><span>الميزانية الشهرية (€) — اختياري</span><input type="number" min="0" step="0.01" value={settingsDraft.monthlyBudget??''} onChange={e=>setSettingsDraft(s=>({...s,monthlyBudget:e.target.value===''?null:Number(e.target.value)}))} placeholder="بدون ميزانية"/></label><label className="field"><span>جرامات الذهب الافتراضية</span><input type="number" min="0" step="0.001" value={settingsDraft.defaultGrams} onChange={e=>setSettingsDraft(s=>({...s,defaultGrams:Number(e.target.value)}))}/></label><label className="field"><span>عيار الذهب الافتراضي</span><select value={settingsDraft.defaultKarat} onChange={e=>setSettingsDraft(s=>({...s,defaultKarat:Number(e.target.value)}))}>{[24,22,21,18].map(n=><option value={n} key={n}>{n} قيراط</option>)}</select></label><button className="button button-primary" disabled={busy}><Check size={18}/> حفظ الإعدادات</button></form></section><section className="panel export-panel"><div className="panel-header"><div><h2>حفظ نسخة من السجل</h2><p>ينشأ ملف CSV محلي من السجلات المقروءة، بدون نقل بياناتك لخدمة أخرى.</p></div></div><div className="export-row"><div className="export-icon"><Download size={24}/></div><div><b>نسخة بيانات CSV</b><small>{snaps.length} قراءة جاهزة للتصدير</small></div><button className="button button-muted" onClick={exportCsv}><Download size={16}/> تصدير</button></div></section><div className="info-banner"><ShieldCheck size={18}/> هذه النسخة متصلة بقاعدة بيانات MonyCal السحابية. حذف السجلات من هنا يحذفها من القاعدة الجديدة، ولا يوجد زر لإعادة تهيئة البيانات.</div></>}
+          {tab==='settings'&&<><InstallApp/><section className="panel theme-settings-card" aria-label="مظهر التطبيق"><div><h2>مظهر التطبيق</h2><p>اختر المظهر الذي يناسبك. سيبقى اختيارك محفوظًا على هذا الجهاز.</p></div><div className="theme-options" role="group" aria-label="اختيار مظهر التطبيق"><button type="button" className={theme==='light'?'selected':''} aria-pressed={theme==='light'} onClick={()=>selectTheme('light')}><Sun size={19}/> فاتح</button><button type="button" className={theme==='dark'?'selected':''} aria-pressed={theme==='dark'} onClick={()=>selectTheme('dark')}><Moon size={19}/> داكن</button></div></section><div className="page-heading"><div><span className="eyebrow">التحكم</span><h1>الإعدادات</h1><p>اضبط ميزانيتك وقيم الذهب الافتراضية، وحافظ على نسخة من تاريخك المالي.</p></div></div><section className="panel settings-panel"><div className="panel-header"><div><h2>الميزانية والتفضيلات</h2><p>الإعدادات تطبّق على القراءات المستقبلية فقط</p></div></div><form onSubmit={e=>void saveSettings(e)} className="settings-form"><label className="field"><span>الميزانية الشهرية (€) — اختياري</span><input type="number" min="0" step="0.01" value={settingsDraft.monthlyBudget??''} onChange={e=>setSettingsDraft(s=>({...s,monthlyBudget:e.target.value===''?null:Number(e.target.value)}))} placeholder="بدون ميزانية"/></label><label className="field"><span>جرامات الذهب الافتراضية</span><input type="number" min="0" step="0.001" value={settingsDraft.defaultGrams} onChange={e=>setSettingsDraft(s=>({...s,defaultGrams:Number(e.target.value)}))}/></label><label className="field"><span>عيار الذهب الافتراضي</span><select value={settingsDraft.defaultKarat} onChange={e=>setSettingsDraft(s=>({...s,defaultKarat:Number(e.target.value)}))}>{[24,22,21,18].map(n=><option value={n} key={n}>{n} قيراط</option>)}</select></label><button className="button button-primary" disabled={busy}><Check size={18}/> حفظ الإعدادات</button></form></section><section className="panel export-panel"><div className="panel-header"><div><h2>حفظ نسخة من السجل</h2><p>ينشأ ملف CSV محلي من السجلات المقروءة، بدون نقل بياناتك لخدمة أخرى.</p></div></div><div className="export-row"><div className="export-icon"><Download size={24}/></div><div><b>نسخة بيانات CSV</b><small>{snaps.length} قراءة جاهزة للتصدير</small></div><button className="button button-muted" onClick={exportCsv}><Download size={16}/> تصدير</button></div></section><div className="info-banner"><ShieldCheck size={18}/> هذه النسخة متصلة بقاعدة بيانات MonyCal السحابية. حذف السجلات من هنا يحذفها من القاعدة الجديدة، ولا يوجد زر لإعادة تهيئة البيانات.</div></>}
         </>}
       </main>
     </div>

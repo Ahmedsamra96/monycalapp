@@ -1,5 +1,5 @@
 'use client';
-import { ArrowDownRight, ArrowUpRight, Banknote, Building2, CalendarDays, ChevronLeft, Coins, CreditCard, HandCoins, Landmark, Plus, Wallet, Users } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, Banknote, Building2, CalendarDays, ChevronLeft, Coins, CreditCard, HandCoins, Landmark, Moon, Plus, Sun, Wallet, Users } from 'lucide-react';
 import { currentMonth, dateLabel, goldValue, monthLabel, netWorth, number, sumPeople, withoutGold, type Settings, type Snapshot } from '@/lib/finance';
 
 type Monthly = {items:Snapshot[];spent:number;received:number;net:number}|null;
@@ -9,6 +9,8 @@ type Props = {
   previous:Snapshot|undefined;
   month:Monthly;
   settings:Settings;
+  theme:'light'|'dark';
+  onThemeToggle:()=>void;
   onNew:()=>void;
   onHistory:()=>void;
   onGold:()=>void;
@@ -18,7 +20,7 @@ const euro=(value:number,minimumFractionDigits=0)=>`€ ${new Intl.NumberFormat(
 const shortDate=(value:string)=>new Intl.DateTimeFormat('ar-EG-u-nu-latn',{day:'numeric',month:'long',hour:'numeric',minute:'2-digit'}).format(new Date(value));
 const todayLabel=()=>new Intl.DateTimeFormat('ar-EG-u-nu-latn',{weekday:'long',day:'numeric',month:'long',year:'numeric'}).format(new Date());
 
-export default function HomeOverview({snapshots,latest,previous,month,settings,onNew,onHistory,onGold,onEdit}:Props){
+export default function HomeOverview({snapshots,latest,previous,month,settings,theme,onThemeToggle,onNew,onHistory,onGold,onEdit}:Props){
   const plain=latest?withoutGold(latest):0;
   const full=latest?netWorth(latest):0;
   const change=latest&&previous?plain-withoutGold(previous):null;
@@ -37,7 +39,7 @@ export default function HomeOverview({snapshots,latest,previous,month,settings,o
   return <div className="reference-dashboard">
     <header className="overview-welcome">
       <div><h1>أهلًا أحمد <span aria-hidden="true">👋</span></h1><p>{todayLabel()}</p></div>
-      <button className="overview-wallet" type="button" onClick={onGold} aria-label="عرض محفظة الذهب" title="محفظة الذهب"><Wallet size={22}/></button>
+      <div className="overview-welcome-actions"><button className="overview-wallet" type="button" onClick={onThemeToggle} aria-label={theme==='dark'?'تفعيل الوضع الفاتح':'تفعيل الوضع الداكن'} title={theme==='dark'?'الوضع الفاتح':'الوضع الداكن'} aria-pressed={theme==='dark'}>{theme==='dark'?<Sun size={22}/>:<Moon size={22}/>}</button><button className="overview-wallet" type="button" onClick={onGold} aria-label="عرض محفظة الذهب" title="محفظة الذهب"><Wallet size={22}/></button></div>
     </header>
 
     <section className="overview-hero" aria-label="ملخص أموالك">
