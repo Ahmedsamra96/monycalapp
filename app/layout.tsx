@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import PWAClient from '@/components/PWAClient';
 import './globals.css';
 import './mobile-pwa.css';
+import './history.css';
 
 export const metadata: Metadata = {
   applicationName:'MonyCal', title:'مالي — MonyCal',
