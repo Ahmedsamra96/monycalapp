@@ -68,7 +68,12 @@ export default function SnapshotEditor({item,latest,snapshots,settings,onClose,o
   item?: Snapshot; latest?: Snapshot; snapshots?: Snapshot[]; settings: Settings;
   onClose:()=>void; onSave:(data:Payload)=>Promise<void>; busy:boolean;
 }) {
-  const [form,setForm] = useState<Payload>(()=>({...copySnapshot(item??latest,settings),date:item?.date??new Date().toISOString()}));
+  const [form,setForm] = useState<Payload>(()=>({
+    ...copySnapshot(item ?? latest, settings),
+    date: item?.date ?? new Date().toISOString(),
+    // A new snapshot carries forward balances, not the previous snapshot's note.
+    note: item?.note ?? '',
+  }));
   const [step,setStep] = useState(0);
   const [debtSide,setDebtSide] = useState<DebtSide>('people');
   const [error,setError] = useState('');
