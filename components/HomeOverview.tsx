@@ -28,6 +28,8 @@ export default function HomeOverview({snapshots,latest,previous,month,settings,t
   const budget=settings.monthlyBudget;
   const remaining=budget===null?null:budget-(month?.spent??0);
   const usedPercent=budget!==null&&budget>0?Math.min(100,((month?.spent??0)/budget)*100):0;
+  // Reuse the current month's readings from the same calculation as the budget card.
+  const recentReadings=[...(month?.items??[])].reverse().slice(0,4);
   const accounts=[
     {label:'البنك',value:latest?.bank??0,Icon:Landmark},
     {label:'OFII',value:latest?.ofii??0,Icon:Building2},
@@ -88,9 +90,9 @@ export default function HomeOverview({snapshots,latest,previous,month,settings,t
     </section>}
 
     <section className="overview-section overview-recent" aria-labelledby="recent-heading">
-      <div className="overview-section-heading"><h2 id="recent-heading">آخر القراءات</h2><button className="overview-link" type="button" onClick={onHistory}>عرض الكل <ChevronLeft size={17}/></button></div>
-      {snapshots.length===0?<div className="overview-empty">لا توجد قراءات بعد. اضغط إضافة قراءة جديدة للبدء.</div>:<div className="overview-recent-list">
-        {[...snapshots].reverse().slice(0,4).map(s=>{
+      <div className="overview-section-heading"><h2 id="recent-heading">آخر قراءات {monthLabel(currentMonth())}</h2><button className="overview-link" type="button" onClick={onHistory}>عرض الكل <ChevronLeft size={17}/></button></div>
+      {recentReadings.length===0?<div className="overview-empty">لا توجد قراءات في {monthLabel(currentMonth())} بعد. يمكنك الاطلاع على الأشهر السابقة من السجل.</div>:<div className="overview-recent-list">
+        {recentReadings.map(s=>{
           const idx=snapshots.findIndex(x=>x.id===s.id);
           const previousSnapshot=idx>0?snapshots[idx-1]:undefined;
           const delta=previousSnapshot?withoutGold(s)-withoutGold(previousSnapshot):null;
